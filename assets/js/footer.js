@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <a href="index.html#overview">대회 개요</a>
           <a href="index.html#venue">장소·일정</a>
           <a href="kit.html">참가 KIT</a>
-          <a href="bracket.html">대진표·선수명단</a>
+          <a href="bracket.html">참가 선수 명단</a>
         </div>
         <div class="footer-col">
           <h5>TICKET & CONTACT</h5>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>선수 명단 관리자 | SPYDER BJJ SUPER SERIES</title>
+<link rel="stylesheet" href="assets/css/style.css?v=7">
+<style>
+  .admin-wrap{ max-width:1040px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 100px; }
+  .admin-bar{
+    position:fixed; top:0; left:0; right:0; z-index:100; height:var(--nav-h);
+    display:flex; align-items:center; background:rgba(5,6,8,0.9);
+    border-bottom:1px solid var(--line);
+  }
+  .admin-bar .inner{ max-width:1040px; margin:0 auto; padding:0 24px; width:100%; display:flex; align-items:center; justify-content:space-between; }
+  .admin-title{ font-family:var(--mono); font-size:13px; letter-spacing:1px; color:var(--white); }
+  .admin-title a{ color:var(--mute-2); }
+  .admin-block{ border:1px solid var(--line); padding:32px; margin-bottom:32px; }
+  .admin-block h2{ font-family:var(--mono); font-size:14px; letter-spacing:1px; text-transform:uppercase; color:var(--white); margin-bottom:8px; }
+  .admin-block .desc{ color:var(--mute); font-size:13.5px; margin-bottom:22px; line-height:1.7; }
+  .cat-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+  .cat-row input{
+    flex:1; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
+    padding:10px 14px; font-family:var(--font); font-size:14px;
+  }
+  .cat-row input:focus{ outline:none; border-color:var(--red); }
+  .cat-row button, .row-del{
+    background:none; border:1px solid var(--line); color:var(--mute);
+    padding:9px 14px; cursor:pointer; font-family:var(--mono); font-size:12px;
+    white-space:nowrap; flex-shrink:0;
+  }
+  .cat-row button:hover, .row-del:hover{ border-color:var(--red); color:var(--red); }
+  .paste-hint{
+    font-family:var(--mono); font-size:12px; color:var(--gold);
+    background:var(--bg-card); border:1px solid var(--line); padding:10px 14px; margin-bottom:14px;
+    overflow-x:auto; white-space:nowrap;
+  }
+  textarea#pasteArea{
+    width:100%; min-height:160px; background:var(--bg-card); border:1px solid var(--line);
+    color:var(--white); padding:14px; font-family:var(--mono); font-size:13px; resize:vertical;
+  }
+  textarea#pasteArea:focus{ outline:none; border-color:var(--red); }
+  .admin-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .edit-table{ width:100%; border-collapse:collapse; }
+  .edit-table th{
+    font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--mute-2); text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);
+  }
+  .edit-table td{ padding:6px; border-bottom:1px solid var(--line); }
+  .edit-table input{
+    width:100%; background:transparent; border:1px solid transparent; color:var(--white);
+    padding:8px; font-family:var(--font); font-size:13.5px;
+  }
+  .edit-table input:focus{ outline:none; border-color:var(--red); background:var(--bg-card); }
+  .empty-row{ color:var(--mute-2); text-align:center; padding:30px !important; }
+  .admin-note{ font-size:12.5px; color:var(--mute-2); margin-top:14px; line-height:1.8; }
+  .admin-note b{ color:var(--white); }
+  .admin-wrap .btn::after{ content:none; }
+</style>
+</head>
+<body>
+
+<div class="admin-bar">
+  <div class="inner">
+    <span class="admin-title">SPYDER <span style="color:var(--mute-2);">/</span> 선수 명단 관리자</span>
+    <span class="admin-title"><a href="bracket.html">← 사이트로 돌아가기</a></span>
+  </div>
+</div>
+
+<div class="admin-wrap">
+
+  <div class="admin-block">
+    <h2>[ 01 ] 분류 항목 설정</h2>
+    <p class="desc">이름·소속 외에 관리할 분류 항목입니다. 기본값은 체급/연령/성별이며, 자유롭게 추가·삭제·이름 변경이 가능합니다. 항목 순서가 아래 엑셀 붙여넣기 열 순서가 됩니다.</p>
+    <div id="catList"></div>
+    <div class="admin-actions">
+      <button class="btn btn-outline" id="addCatBtn" type="button">+ 분류 항목 추가</button>
+    </div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 02 ] 엑셀 붙여넣기로 등록</h2>
+    <p class="desc">엑셀에서 아래 순서의 열을 선택해 복사(Ctrl+C)한 뒤, 텍스트 상자에 붙여넣으세요(Ctrl+V). 헤더(제목) 행은 제외하고 데이터만 복사해 주세요.</p>
+    <div class="paste-hint" id="pasteHint"></div>
+    <textarea id="pasteArea" placeholder="여기에 엑셀 데이터를 붙여넣으세요"></textarea>
+    <div class="admin-actions">
+      <button class="btn btn-primary" id="parseBtn" type="button">붙여넣은 데이터 추가하기</button>
+    </div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 03 ] 현재 등록된 선수 명단 <span id="rosterTotal" style="color:var(--mute-2); font-weight:400;"></span></h2>
+    <p class="desc">셀을 직접 클릭해서 수정할 수 있습니다. 변경사항은 이 브라우저에 자동 저장됩니다 (아래 내보내기 전까지는 실제 사이트에는 반영되지 않습니다).</p>
+    <div style="overflow-x:auto;">
+      <table class="edit-table" id="editTable"></table>
+    </div>
+    <div class="admin-actions">
+      <button class="btn btn-outline" id="addRowBtn" type="button">+ 선수 직접 추가</button>
+    </div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 04 ] 게시 / 불러오기</h2>
+    <p class="desc">아래 <b>JSON 파일 다운로드</b>로 받은 <code>roster.json</code> 파일을 웹사이트 저장소의 <code>assets/data/roster.json</code>에 덮어써야 실제 방문자에게 반영됩니다.</p>
+    <div class="admin-actions">
+      <button class="btn btn-primary" id="exportBtn" type="button">JSON 파일 다운로드</button>
+      <button class="btn btn-outline" id="loadLiveBtn" type="button">현재 게시된 명단 불러오기</button>
+      <button class="btn btn-outline" id="resetBtn" type="button">초기화</button>
+    </div>
+    <p class="admin-note">작업 내용은 이 브라우저의 로컬 저장소에만 보관됩니다. 다른 기기나 브라우저에서는 보이지 않으니, 작업이 끝나면 반드시 JSON을 다운로드해 저장소에 반영해 주세요.</p>
+  </div>
+
+</div>
+
+<script src="assets/js/admin.js?v=1"></script>
+</body>
+</html>

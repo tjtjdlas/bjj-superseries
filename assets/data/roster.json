@@ -1,0 +1,8 @@
+{
+  "categories": [
+    { "key": "weight", "label": "체급" },
+    { "key": "age", "label": "연령" },
+    { "key": "gender", "label": "성별" }
+  ],
+  "athletes": []
+}
