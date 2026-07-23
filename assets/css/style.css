@@ -3,7 +3,7 @@
    Editorial / technical sports-brand system
    ================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root{
   --bg-0:#050608;
@@ -37,13 +37,14 @@ body{
 img{ max-width:100%; display:block; }
 a{ color:inherit; text-decoration:none; }
 ul{ margin:0; padding:0; list-style:none; }
-h1,h2,h3,h4{ margin:0; font-weight:900; }
+h1,h2,h3,h4{ margin:0; font-weight:700; }
 p{ margin:0; }
 
 .display{
-  font-family:'Anton', 'Noto Sans KR', sans-serif;
-  text-transform:uppercase;
-  letter-spacing:0.5px;
+  font-family:'Manrope', 'Noto Sans KR', sans-serif;
+  font-weight:700;
+  text-transform:none;
+  letter-spacing:-0.5px;
 }
 .mono{ font-family:var(--mono); }
 
@@ -115,9 +116,10 @@ p{ margin:0; }
   display:flex;
   align-items:center;
   gap:10px;
-  font-family:'Anton', sans-serif;
-  font-size:18px;
-  letter-spacing:0.5px;
+  font-family:'Manrope', sans-serif;
+  font-weight:800;
+  font-size:17px;
+  letter-spacing:0px;
   white-space:nowrap;
 }
 .brand .spider-icon{ width:22px; height:22px; flex-shrink:0; }
@@ -229,9 +231,10 @@ p{ margin:0; }
 }
 .hero-eyebrow span{ color:var(--red); }
 .hero-title{
-  font-size:clamp(52px, 11vw, 130px);
-  line-height:0.88;
-  letter-spacing:-1px;
+  font-size:clamp(48px, 10vw, 118px);
+  font-weight:800;
+  line-height:0.95;
+  letter-spacing:-2px;
   color:var(--white);
 }
 .hero-title .thin{ color:var(--mute-2); font-size:0.32em; font-family:var(--mono); text-transform:uppercase; display:block; letter-spacing:4px; margin-bottom:14px; font-weight:400;}
@@ -317,9 +320,10 @@ p{ margin:0; }
   animation:scroll 32s linear infinite;
 }
 .marquee-track span{
-  font-family:'Anton', sans-serif;
-  font-size:19px;
-  letter-spacing:2px;
+  font-family:'Manrope', sans-serif;
+  font-weight:700;
+  font-size:17px;
+  letter-spacing:1px;
   color:var(--mute-2);
   padding:14px 40px;
   display:inline-flex;
@@ -402,10 +406,11 @@ section{ position:relative; z-index:1; }
   flex-shrink:0;
 }
 .s-value{
-  font-family:'Anton', sans-serif;
+  font-family:'Manrope', sans-serif;
+  font-weight:700;
   font-size:19px;
   color:var(--white);
-  letter-spacing:0.3px;
+  letter-spacing:-0.2px;
   flex:1;
 }
 .s-value small{
@@ -474,9 +479,10 @@ section{ position:relative; z-index:1; }
   letter-spacing:1px;
 }
 .target-tag{
-  font-family:'Anton',sans-serif;
-  font-size:30px;
-  letter-spacing:1px;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:27px;
+  letter-spacing:-0.3px;
   margin-bottom:14px;
   margin-top:26px;
 }
@@ -570,11 +576,12 @@ section{ position:relative; z-index:1; }
   margin-bottom:20px;
 }
 .match-banner h3{
-  font-family:'Anton',sans-serif;
-  font-size:clamp(28px,4vw,40px);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:clamp(26px,4vw,36px);
   color:#fff;
   margin-bottom:18px;
-  letter-spacing:0.5px;
+  letter-spacing:-0.5px;
 }
 .match-banner p{ color:var(--mute); font-size:14.5px; line-height:1.9; margin-bottom:10px;}
 .prize-row{
@@ -586,8 +593,9 @@ section{ position:relative; z-index:1; }
 .prize-row div{ padding:18px 30px 0 0; }
 .prize-row div b{
   display:block;
-  font-family:'Anton',sans-serif;
-  font-size:28px;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:26px;
   color:var(--gold);
 }
 .prize-row div span{ font-size:11px; color:var(--mute); letter-spacing:1.5px; font-family:var(--mono); text-transform:uppercase; }
@@ -717,10 +725,12 @@ section{ position:relative; z-index:1; }
   overflow:hidden;
 }
 .cta-band h3{
-  font-family:'Anton',sans-serif;
-  font-size:clamp(28px,4.5vw,44px);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:clamp(26px,4.5vw,40px);
   color:#fff;
   margin-bottom:14px;
+  letter-spacing:-0.5px;
 }
 .cta-band p{ color:var(--mute); margin-bottom:32px; font-size:14.5px; font-family:var(--mono); letter-spacing:0.3px;}
 
@@ -737,8 +747,9 @@ footer{
   padding-bottom:40px;
 }
 .footer-brand{
-  font-family:'Anton',sans-serif;
-  font-size:22px;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:19px;
   margin-bottom:14px;
   display:flex; align-items:center; gap:10px;
 }
@@ -784,8 +795,10 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 }
 .page-hero .eyebrow{ margin-bottom:12px; }
 .page-hero h1{
-  font-family:'Anton',sans-serif;
-  font-size:clamp(38px,6vw,64px);
+  font-family:'Manrope',sans-serif;
+  font-weight:700;
+  font-size:clamp(34px,6vw,56px);
+  letter-spacing:-1px;
   position:relative;
   z-index:1;
 }
@@ -841,8 +854,10 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   text-transform:uppercase;
 }
 .ticket-price{
-  font-family:'Anton',sans-serif;
-  font-size:42px;
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:38px;
+  letter-spacing:-0.5px;
   color:var(--white);
   margin-bottom:4px;
 }
