@@ -2,6 +2,21 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Brand story image slider
+  const slider = document.querySelector('#storySlider');
+  if (slider) {
+    const slides = slider.querySelectorAll('.slide');
+    const dots = slider.querySelectorAll('.slide-dots span');
+    let current = 0;
+    setInterval(() => {
+      slides[current].classList.remove('active');
+      dots[current].classList.remove('active');
+      current = (current + 1) % slides.length;
+      slides[current].classList.add('active');
+      dots[current].classList.add('active');
+    }, 3500);
+  }
+
   // Mobile nav toggle
   const navToggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');
