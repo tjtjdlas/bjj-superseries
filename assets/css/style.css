@@ -121,8 +121,7 @@ p{ margin:0; }
   white-space:nowrap;
 }
 .brand .spider-icon{ width:26px; height:auto; flex-shrink:0; }
-.brand-text{ display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
-.brand-text .wordmark{ height:11px; width:auto; }
+.brand .wordmark{ height:14px; width:auto; flex-shrink:0; }
 .brand small{
   display:block;
   font-family:var(--mono);
@@ -130,6 +129,8 @@ p{ margin:0; }
   letter-spacing:2px;
   color:var(--mute);
   font-weight:500;
+  padding-left:10px;
+  border-left:1px solid var(--line);
 }
 .nav-links{
   display:flex;
