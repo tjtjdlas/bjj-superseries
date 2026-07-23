@@ -7,23 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="footer-grid">
         <div>
           <div class="footer-brand">
-            <svg class="spider-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="42" r="9" fill="#fff"/>
-              <ellipse cx="50" cy="60" rx="7" ry="14" fill="#fff"/>
-              <g stroke="#fff" stroke-width="2.5" stroke-linecap="round">
-                <path d="M44 36 L18 20"/><path d="M44 36 L14 34"/><path d="M44 36 L16 48"/><path d="M44 36 L22 62"/>
-                <path d="M56 36 L82 20"/><path d="M56 36 L86 34"/><path d="M56 36 L84 48"/><path d="M56 36 L78 62"/>
-              </g>
-            </svg>
-            SPYDER BJJ SUPER SERIES
+            <img src="assets/img/spyder-bug.png" class="spider-icon" alt="">
+            <img src="assets/img/spyder-wordmark.png" class="wordmark" alt="SPYDER">
           </div>
           <p>2016년 시작된 국내 최초 인비테이셔널의 권위를 이어가는 SPYDER BJJ SUPER SERIES. 2026년 PART 2는 명지전문대학교 체육관에서 개최됩니다.</p>
         </div>
         <div class="footer-col">
           <h5>QUICK LINKS</h5>
           <a href="index.html#overview">대회 개요</a>
-          <a href="index.html#target">참가 대상</a>
           <a href="index.html#venue">장소·일정</a>
+          <a href="kit.html">참가 KIT</a>
           <a href="bracket.html">대진표·선수명단</a>
         </div>
         <div class="footer-col">
