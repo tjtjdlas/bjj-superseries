@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="footer-bottom">
         <span>&copy; 2026 SPYDER BJJ SUPER SERIES. All rights reserved.</span>
-        <span>본 페이지는 대회 기획안 기준으로 제작되었으며, 세부 내용은 사정에 따라 변경될 수 있습니다.</span>
       </div>
     </div>
   `;
