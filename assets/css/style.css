@@ -541,6 +541,28 @@ section{ position:relative; z-index:1; }
 }
 .story-slider .slide-dots button:hover{ background:rgba(255,255,255,0.6); }
 .story-slider .slide-dots button.active{ background:var(--red); transform:scale(1.15); }
+
+.slide-arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:3;
+  width:38px; height:38px;
+  border-radius:50%;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,255,255,0.35);
+  color:#fff;
+  font-size:14px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .2s ease, border-color .2s ease;
+}
+.slide-arrow:hover{ background:rgba(0,0,0,0.65); border-color:#fff; }
+.slide-arrow.prev{ left:14px; }
+.slide-arrow.next{ right:14px; }
+
 .story-copy{
   display:flex;
   flex-direction:column;

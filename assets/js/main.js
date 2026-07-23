@@ -34,6 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    const prevBtn = slider.querySelector('.slide-arrow.prev');
+    const nextBtn = slider.querySelector('.slide-arrow.next');
+    if (prevBtn && nextBtn) {
+      prevBtn.addEventListener('click', () => {
+        goTo((current - 1 + slides.length) % slides.length);
+        restartAuto();
+      });
+      nextBtn.addEventListener('click', () => {
+        goTo((current + 1) % slides.length);
+        restartAuto();
+      });
+    }
+
     startAuto();
   }
 
