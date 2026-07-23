@@ -6,15 +6,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const slider = document.querySelector('#storySlider');
   if (slider) {
     const slides = slider.querySelectorAll('.slide');
-    const dots = slider.querySelectorAll('.slide-dots span');
+    const dots = slider.querySelectorAll('.slide-dots button');
     let current = 0;
-    setInterval(() => {
+    let timer = null;
+
+    const goTo = (index) => {
       slides[current].classList.remove('active');
       dots[current].classList.remove('active');
-      current = (current + 1) % slides.length;
+      current = index;
       slides[current].classList.add('active');
       dots[current].classList.add('active');
-    }, 3500);
+    };
+
+    const startAuto = () => {
+      timer = setInterval(() => goTo((current + 1) % slides.length), 3500);
+    };
+    const restartAuto = () => {
+      clearInterval(timer);
+      startAuto();
+    };
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        if (i === current) return;
+        goTo(i);
+        restartAuto();
+      });
+    });
+
+    startAuto();
   }
 
   // Mobile nav toggle

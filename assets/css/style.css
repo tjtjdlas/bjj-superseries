@@ -530,13 +530,17 @@ section{ position:relative; z-index:1; }
   display:flex;
   gap:8px;
 }
-.story-slider .slide-dots span{
-  width:6px; height:6px;
+.story-slider .slide-dots button{
+  width:9px; height:9px;
+  padding:0;
   border-radius:50%;
+  border:none;
   background:rgba(255,255,255,0.3);
-  transition:background .3s ease;
+  cursor:pointer;
+  transition:background .3s ease, transform .2s ease;
 }
-.story-slider .slide-dots span.active{ background:var(--red); }
+.story-slider .slide-dots button:hover{ background:rgba(255,255,255,0.6); }
+.story-slider .slide-dots button.active{ background:var(--red); transform:scale(1.15); }
 .story-copy{
   display:flex;
   flex-direction:column;
