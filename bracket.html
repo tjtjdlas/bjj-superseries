@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대진표·선수명단 | SPYDER BJJ SUPER SERIES 2026 PART 2</title>
+<meta name="description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 대진표 및 참가 선수 명단 안내 페이지. 체급별 접수 현황과 명단이 순차적으로 공개됩니다.">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="web-texture"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <svg class="spider-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="42" r="9" fill="#fff"/>
+        <ellipse cx="50" cy="60" rx="7" ry="14" fill="#fff"/>
+        <g stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+          <path d="M44 36 L18 20"/><path d="M44 36 L14 34"/><path d="M44 36 L16 48"/><path d="M44 36 L22 62"/>
+          <path d="M56 36 L82 20"/><path d="M56 36 L86 34"/><path d="M56 36 L84 48"/><path d="M56 36 L78 62"/>
+        </g>
+      </svg>
+      <span>SPYDER<br><small>BJJ SUPER SERIES</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html#overview">대회 개요</a>
+      <a href="index.html#target">참가 대상</a>
+      <a href="index.html#venue">장소·일정</a>
+      <a href="index.html#gallery">갤러리</a>
+      <a href="bracket.html">대진표·선수명단</a>
+      <a href="tickets.html" class="nav-cta">티켓 예매</a>
+    </div>
+    <button class="nav-toggle" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<header class="page-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">HOME</a><span>/</span><span>BRACKET & ROSTER</span></div>
+    <span class="eyebrow">BRACKET & ROSTER</span>
+    <h1 class="display">대진표 · 선수 명단</h1>
+    <p>체급별 대진표와 참가 선수 명단은 접수 마감 후 순차적으로 공개됩니다. 아래에서 부문을 선택해 진행 현황을 확인하세요.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+
+    <div class="division-tabs reveal" data-target="#divisions">
+      <button class="active" data-division="core">CORE · 이벤트 매치</button>
+      <button data-division="mid">MID · 앱솔루트/유색벨트</button>
+      <button data-division="mass">MASS · 화이트벨트</button>
+    </div>
+
+    <div id="divisions" class="reveal">
+
+      <div class="division-panel active" data-division="core">
+        <div class="empty-state">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2l2.5 5 5.5.8-4 3.9.9 5.5L12 14.7 7.1 17.2l.9-5.5-4-3.9L9.5 7z"/></svg>
+          <h4>초청장 발송 대상 확정 중</h4>
+          <p>이벤트 매치는 아시안게임·전국체전·국제대회 메달리스트 및 스파이더 슈퍼시리즈 앱솔루트 우승 전적 보유자 대상 초청형 매치입니다. 초청 확정 후 대진 및 명단이 이 곳에 공개됩니다.</p>
+        </div>
+      </div>
+
+      <div class="division-panel" data-division="mid">
+        <div class="empty-state">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <h4>접수 진행 중 · 명단 공개 예정</h4>
+          <p>앱솔루트 및 유색벨트 매치 참가 신청이 진행 중입니다. 체급별 대진표는 접수 마감 후 이 페이지에 순차 업데이트됩니다.</p>
+        </div>
+      </div>
+
+      <div class="division-panel" data-division="mass">
+        <div class="empty-state">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <h4>접수 진행 중 · 명단 공개 예정</h4>
+          <p>화이트 벨트 및 유소년 부문 참가 신청이 진행 중입니다. 체급별 대진표는 접수 마감 후 이 페이지에 순차 업데이트됩니다.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROSTER PREVIEW TABLE (format reference) -->
+<section class="section bg-alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">ATHLETE ROSTER</span>
+      <h2 class="section-title display" style="font-size:clamp(26px,4vw,36px);">참가 선수 명단</h2>
+      <p class="section-desc">명단 공개 시 이름/소속/체급/벨트 기준으로 검색하실 수 있습니다. 아래는 공개 예정 명단의 표시 형식입니다.</p>
+    </div>
+
+    <div class="search-row reveal">
+      <input type="text" id="rosterSearch" placeholder="선수 이름, 소속, 체급으로 검색 (명단 공개 후 이용 가능)" disabled>
+    </div>
+
+    <div class="table-scroll reveal">
+      <table class="roster-table">
+        <thead>
+          <tr><th>부문</th><th>체급</th><th>이름</th><th>소속</th><th>벨트</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="5" style="text-align:center; padding:50px 20px; color:var(--mute-2);">
+              선수 명단은 접수 마감 후 공개됩니다. 공개 형식 예시 — <span class="belt-dot belt-blue"></span>블루 · <span class="belt-dot belt-purple"></span>퍼플 · <span class="belt-dot belt-brown"></span>브라운 · <span class="belt-dot belt-black"></span>블랙
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TIMETABLE -->
+<section class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">TIMETABLE</span>
+      <h2 class="section-title display" style="font-size:clamp(26px,4vw,36px);">대회 타임테이블</h2>
+      <p class="section-desc">세부 시간은 대행사 확인 후 확정되며 현재는 잠정 안입니다. (*TBD)</p>
+    </div>
+    <div class="table-scroll reveal">
+      <table class="timetable">
+        <thead>
+          <tr><th>시간</th><th>내용</th><th>비고</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="time">08:00 - 09:00</td><td>선수 접수 및 계체</td><td>TBD</td></tr>
+          <tr><td class="time">09:00 - 09:30</td><td>장비 점검 (위생·규격 검사)</td><td>TBD</td></tr>
+          <tr><td class="time">09:30 - 10:00</td><td>개회식</td><td>TBD</td></tr>
+          <tr><td class="time">10:00 - 17:00</td><td>MASS / MID 부문 경기 진행</td><td>TBD</td></tr>
+          <tr><td class="time">17:00 - 18:00</td><td>CORE 이벤트 매치</td><td>초청 선수 대상</td></tr>
+          <tr><td class="time">18:00 - 19:00</td><td>시상식 및 폐회</td><td>TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="cta-band">
+  <div class="container">
+    <h3 class="display">아직 참가 신청 전이신가요?</h3>
+    <p>티켓 예매 후 체급 배정을 통해 대진표에 등록됩니다.</p>
+    <div class="hero-actions" style="justify-content:center;">
+      <a href="tickets.html" class="btn btn-outline btn-lg">티켓 예매하기</a>
+    </div>
+  </div>
+</section>
+
+<footer id="footer-include"></footer>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/footer.js"></script>
+</body>
+</html>
