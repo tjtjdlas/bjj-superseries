@@ -2,6 +2,23 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Venue map (Leaflet + OSM tiles, self-hosted so we control styling/attribution)
+  const mapEl = document.querySelector('#venueMap');
+  if (mapEl && window.L) {
+    const coords = [37.5836983, 126.9249649];
+    const map = L.map(mapEl, {
+      scrollWheelZoom: false,
+      attributionControl: true
+    }).setView(coords, 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    L.marker(coords).addTo(map);
+  }
+
   // Gallery "load more"
   const galleryMoreBtn = document.querySelector('#galleryMoreBtn');
   if (galleryMoreBtn) {

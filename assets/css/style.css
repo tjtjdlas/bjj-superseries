@@ -753,11 +753,15 @@ section{ position:relative; z-index:1; }
   overflow:hidden;
   background:var(--bg-card);
 }
-.venue-map iframe{
+.venue-map #venueMap{
   position:absolute; inset:0;
   width:100%; height:100%;
-  border:0;
   filter:invert(93%) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+.venue-map .leaflet-control-attribution{
+  background:rgba(255,255,255,0.75) !important;
+  font-size:10px !important;
+  padding:2px 6px !important;
 }
 .map-link-btn{
   position:absolute;

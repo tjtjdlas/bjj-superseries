@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SPYDER BJJ SUPER SERIES 2026 PART 2</title>
 <meta name="description" content="2026년 10월 18일, 명지전문대학교 예체능관 3층에서 열리는 SPYDER BJJ SUPER SERIES 2026 PART 2. 얼리버드 티켓 오픈 및 참가 선수 명단 안내.">
-<link rel="stylesheet" href="assets/css/style.css?v=16">
+<link rel="stylesheet" href="assets/css/style.css?v=17">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
 <body>
 
@@ -125,9 +126,7 @@
     </div>
     <div class="venue-grid reveal">
       <div class="venue-map">
-        <iframe
-          src="https://www.openstreetmap.org/export/embed.html?bbox=126.920965%2C37.580698%2C126.928965%2C37.586698&amp;layer=mapnik&amp;marker=37.5836983%2C126.9249649"
-          loading="lazy" title="명지전문대학교 위치 지도"></iframe>
+        <div id="venueMap"></div>
         <a href="https://naver.me/58NGkoBA" target="_blank" rel="noopener" class="map-link-btn">네이버 지도에서 길찾기 ↗</a>
       </div>
       <div class="venue-info">
@@ -224,7 +223,8 @@
 
 <a href="tickets.html" class="floating-ticket">TICKET</a>
 
-<script src="assets/js/main.js?v=16"></script>
-<script src="assets/js/footer.js?v=16"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="assets/js/main.js?v=17"></script>
+<script src="assets/js/footer.js?v=17"></script>
 </body>
 </html>
