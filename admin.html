@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>선수 명단 관리자 | SPYDER BJJ SUPER SERIES</title>
-<link rel="stylesheet" href="assets/css/style.css?v=27">
+<link rel="stylesheet" href="assets/css/style.css?v=28">
 <style>
   .admin-wrap{ max-width:1040px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 100px; }
   .admin-bar{
@@ -57,9 +57,33 @@
   .admin-note{ font-size:12.5px; color:var(--mute-2); margin-top:14px; line-height:1.8; }
   .admin-note b{ color:var(--white); }
   .admin-wrap .btn::after{ content:none; }
+  #adminGate{
+    position:fixed; inset:0; z-index:2000; background:var(--bg-0);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  #adminGate form{ width:100%; max-width:320px; text-align:center; }
+  #adminGate .lock-label{ font-family:var(--font); font-size:13px; color:var(--mute); margin-bottom:18px; }
+  #adminGate input{
+    width:100%; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
+    padding:14px 16px; font-family:var(--font); font-size:14px; text-align:center; margin-bottom:14px;
+  }
+  #adminGate input:focus{ outline:none; border-color:var(--red); }
+  #adminGate .btn{ width:100%; }
+  #adminGateError{ display:none; color:var(--red); font-size:12.5px; margin-top:12px; }
 </style>
 </head>
 <body>
+
+<div id="adminGate">
+  <form id="adminGateForm">
+    <div class="lock-label">비밀번호를 입력하세요</div>
+    <input type="password" id="adminGatePw" autocomplete="off" placeholder="PASSWORD">
+    <button type="submit" class="btn btn-primary">입장</button>
+    <div id="adminGateError">비밀번호가 올바르지 않습니다.</div>
+  </form>
+</div>
+
+<div id="adminContent" style="display:none;">
 
 <div class="admin-bar">
   <div class="inner">
@@ -113,6 +137,40 @@
 
 </div>
 
+</div>
+
+<script>
+(function(){
+  var PASSWORD = 'Spyder0)';
+  var gate = document.getElementById('adminGate');
+  var content = document.getElementById('adminContent');
+  var form = document.getElementById('adminGateForm');
+  var pwInput = document.getElementById('adminGatePw');
+  var errorEl = document.getElementById('adminGateError');
+
+  function unlock(){
+    gate.style.display = 'none';
+    content.style.display = '';
+  }
+
+  if (sessionStorage.getItem('spyderAdminOk') === '1') {
+    unlock();
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (pwInput.value === PASSWORD) {
+      sessionStorage.setItem('spyderAdminOk', '1');
+      errorEl.style.display = 'none';
+      unlock();
+    } else {
+      errorEl.style.display = 'block';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  });
+})();
+</script>
 <script src="assets/js/admin.js?v=2"></script>
 </body>
 </html>
