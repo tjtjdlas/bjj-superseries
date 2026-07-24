@@ -187,11 +187,11 @@ p{ margin:0; }
 .brand small{
   display:block;
   font-family:var(--mono);
-  font-size:9px;
+  font-size:13px;
   letter-spacing:2px;
   color:var(--mute);
   font-weight:500;
-  padding-left:10px;
+  padding-left:14px;
   border-left:1px solid var(--line);
 }
 .nav-links{
@@ -245,6 +245,9 @@ p{ margin:0; }
   .nav-links a{ padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
   .nav-cta{ margin-top:8px; text-align:center; }
   .nav-toggle{ display:flex; }
+}
+@media (max-width:420px){
+  .brand small{ display:none; }
 }
 
 /* ---------- HERO ---------- */
