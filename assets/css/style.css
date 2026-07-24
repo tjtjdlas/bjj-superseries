@@ -295,6 +295,19 @@ p{ margin:0; }
   align-items:center;
 }
 
+/* ---------- 3D TILT CARDS (target/ticket/kit cards) ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .tilt-card{
+    transition:transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease;
+    will-change:transform;
+    transform:perspective(900px) rotateX(0) rotateY(0) translateZ(0);
+  }
+  .tilt-card:hover{
+    box-shadow:0 24px 40px -20px rgba(0,0,0,0.5);
+    z-index:2;
+  }
+}
+
 /* ---------- BUTTONS ---------- */
 .btn{
   display:inline-flex;
@@ -320,6 +333,10 @@ p{ margin:0; }
 .btn-outline:hover{ border-color:var(--white); background:rgba(255,255,255,0.06); }
 .btn-block{ width:100%; }
 .btn-lg{ padding:26px 38px; font-size:16px; }
+@media (prefers-reduced-motion:no-preference){
+  .btn:hover{ transform:translateY(-3px); box-shadow:0 14px 26px -12px rgba(0,0,0,0.55); }
+  .btn:active{ transform:translateY(0); box-shadow:0 4px 10px -6px rgba(0,0,0,0.5); transition-duration:.05s; }
+}
 
 /* text-only arrow link (used inline, e.g. ticket CTA text) */
 .link-arrow{
