@@ -9,7 +9,7 @@
 <style>
   .admin-wrap{ max-width:1040px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 100px; }
   .admin-bar{
-    position:fixed; top:0; left:0; right:0; z-index:100; height:var(--nav-h);
+    position:fixed; top:0; left:0; right:0; z-index:var(--z-sticky-header); height:var(--nav-h);
     display:flex; align-items:center; background:rgba(5,6,8,0.9);
     border-bottom:1px solid var(--line);
   }
@@ -21,7 +21,7 @@
   .admin-block .desc{ color:var(--mute); font-size:13.5px; margin-bottom:22px; line-height:1.7; }
   .cat-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
   .cat-row input{
-    flex:1; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
+    flex:1; min-width:0; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
     padding:10px 14px; font-family:var(--font); font-size:14px;
   }
   .cat-row input:focus{ outline:none; border-color:var(--red); }

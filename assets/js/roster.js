@@ -67,8 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tableBody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center; padding:50px 20px; color:var(--mute-2);">${msg}</td></tr>`;
     } else {
       tableBody.innerHTML = filtered.map(a => {
-        const cells = [a.name, a.team, ...categories.map(c => a[c.key] || '-')];
-        return '<tr>' + cells.map(c => `<td>${escapeHtml(c || '-')}</td>`).join('') + '</tr>';
+        const nameTeamCells = [a.name, a.team].map(c =>
+          `<td class="text-truncate-1" style="max-width:220px;" title="${escapeHtml(c || '-')}">${escapeHtml(c || '-')}</td>`
+        ).join('');
+        const catCells = categories.map(c => `<td>${escapeHtml(a[c.key] || '-')}</td>`).join('');
+        return `<tr>${nameTeamCells}${catCells}</tr>`;
       }).join('');
     }
 

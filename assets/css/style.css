@@ -52,6 +52,17 @@
   --nav-h:76px;
   --mono:'JetBrains Mono', monospace;
   --font:'SCDream', sans-serif;
+
+  /* z-index scale (DESIGN_AND_UX_GUIDE.md #2.2) */
+  --z-below:-1;
+  --z-default:1;
+  --z-card-hover:10;
+  --z-sticky-header:100;
+  --z-dropdown:200;
+  --z-floating-btn:500;
+  --z-overlay:900;
+  --z-modal:1000;
+  --z-toast:1100;
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -63,12 +74,35 @@ body{
   font-family:var(--font);
   line-height:1.6;
   overflow-x:hidden;
+  word-break:keep-all;
+  overflow-wrap:break-word;
 }
 img{ max-width:100%; display:block; }
 a{ color:inherit; text-decoration:none; }
 ul{ margin:0; padding:0; list-style:none; }
-h1,h2,h3,h4{ margin:0; font-weight:700; }
+h1,h2,h3,h4{ margin:0; font-weight:700; text-wrap:balance; }
 p{ margin:0; }
+
+/* ---------- TEXT TRUNCATION (DESIGN_AND_UX_GUIDE.md #1.2) ---------- */
+.text-truncate-1{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+.text-truncate-2{
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* ---------- TABULAR NUMBERS for scores/timers/prices (DESIGN_AND_UX_GUIDE.md #1.2) ---------- */
+.tabular-numbers{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+}
 
 .display{
   font-family:var(--font);
@@ -122,7 +156,7 @@ p{ margin:0; }
 .nav{
   position:fixed;
   top:0; left:0; right:0;
-  z-index:100;
+  z-index:var(--z-sticky-header);
   height:var(--nav-h);
   display:flex;
   align-items:center;
@@ -365,6 +399,45 @@ p{ margin:0; }
   100%{ transform:translateX(-50%); }
 }
 
+/* ---------- STAT BAND (hero-adjacent credibility numbers) ---------- */
+.stat-band{
+  background:var(--bg-1);
+  border-bottom:1px solid var(--line);
+  position:relative;
+  z-index:1;
+}
+.stat-band .container{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.stat-item{
+  padding:32px 24px;
+  border-right:1px solid var(--line);
+  text-align:center;
+}
+.stat-item:last-child{ border-right:none; }
+.stat-num{
+  font-family:var(--font);
+  font-weight:900;
+  font-size:clamp(24px,3.6vw,40px);
+  color:var(--white);
+  letter-spacing:-0.5px;
+  font-variant-numeric:tabular-nums;
+}
+.stat-label{
+  margin-top:8px;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:1px;
+  color:var(--mute-2);
+  text-transform:uppercase;
+}
+@media (max-width:700px){
+  .stat-band .container{ grid-template-columns:repeat(2,1fr); }
+  .stat-item:nth-child(2n){ border-right:none; }
+  .stat-item:nth-child(1), .stat-item:nth-child(2){ border-bottom:1px solid var(--line); }
+}
+
 /* ---------- SECTION ---------- */
 section{ position:relative; z-index:1; }
 .section{ padding:120px 0; }
@@ -450,6 +523,7 @@ section{ position:relative; z-index:1; }
   color:var(--white);
   letter-spacing:-0.2px;
   flex:1;
+  min-width:0;
 }
 .s-value small{
   display:inline-block;
@@ -825,7 +899,7 @@ section{ position:relative; z-index:1; }
 .lightbox{
   position:fixed; inset:0;
   background:rgba(0,0,0,0.94);
-  z-index:1000;
+  z-index:var(--z-modal);
   display:none;
   align-items:center;
   justify-content:center;
@@ -982,6 +1056,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   letter-spacing:-0.5px;
   color:var(--white);
   margin-bottom:4px;
+  font-variant-numeric:tabular-nums;
 }
 .ticket-price span{ font-size:14px; color:var(--mute); font-family:var(--font); font-weight:400; }
 .ticket-note{ font-family:var(--font); font-size:11.5px; color:var(--mute-2); margin-bottom:30px; }
@@ -1072,7 +1147,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   text-transform:uppercase;
 }
 .timetable td{ color:var(--mute); }
-.timetable td.time{ color:var(--white); font-weight:700; white-space:nowrap; font-family:var(--mono); }
+.timetable td.time{ color:var(--white); font-weight:700; white-space:nowrap; font-family:var(--mono); font-variant-numeric:tabular-nums; }
 .table-scroll{ overflow-x:auto; border:1px solid var(--line); }
 .table-scroll .timetable{ min-width:560px; }
 .table-scroll th:first-child, .table-scroll td:first-child{ padding-left:24px; }
@@ -1200,7 +1275,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 .floating-ticket{
   position:fixed;
   right:20px; bottom:20px;
-  z-index:90;
+  z-index:var(--z-floating-btn);
   background:var(--red);
   color:#fff;
   padding:14px 20px;
