@@ -35,6 +35,8 @@
   const ghTokenStatus = document.querySelector('#ghTokenStatus');
   const publishBtn = document.querySelector('#publishBtn');
   const publishStatus = document.querySelector('#publishStatus');
+  const quickSaveBtns = document.querySelectorAll('.quick-save-btn');
+  const allSaveBtns = [publishBtn, ...quickSaveBtns];
 
   function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
 
@@ -229,7 +231,7 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  publishBtn.addEventListener('click', async () => {
+  async function publishToGitHub() {
     const token = getToken();
     if (!token) {
       alert('먼저 [04]에서 GitHub 토큰을 저장해 주세요.');
@@ -243,7 +245,7 @@
       Accept: 'application/vnd.github+json'
     };
 
-    publishBtn.disabled = true;
+    allSaveBtns.forEach(btn => { btn.disabled = true; });
     publishStatus.textContent = '반영 중...';
 
     try {
@@ -276,9 +278,11 @@
       publishStatus.textContent = '오류: ' + e.message;
       alert('반영 중 오류가 발생했습니다: ' + e.message);
     } finally {
-      publishBtn.disabled = false;
+      allSaveBtns.forEach(btn => { btn.disabled = false; });
     }
-  });
+  }
+
+  allSaveBtns.forEach(btn => btn.addEventListener('click', publishToGitHub));
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({
