@@ -1,10 +1,17 @@
 {
   "categories": [
-    { "key": "weight", "label": "체급" },
-    { "key": "age", "label": "연령" },
-    { "key": "gender", "label": "성별" }
+    {
+      "key": "weight",
+      "label": "체급"
+    },
+    {
+      "key": "age",
+      "label": "연령"
+    },
+    {
+      "key": "gender",
+      "label": "성별"
+    }
   ],
-  "athletes": [
-    { "name": "전진우", "team": "스파이더", "weight": "무제한급", "age": "20대", "gender": "여자" }
-  ]
+  "athletes": []
 }
