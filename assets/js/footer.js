@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <img src="assets/img/spyder-bug.png" class="spider-icon" alt="">
             <img src="assets/img/spyder-wordmark.png" class="wordmark" alt="SPYDER">
           </div>
-          <p>2016년 시작된 국내 최초 인비테이셔널의 권위를 이어가는 SPYDER BJJ SUPER SERIES. 2026년 PART 2는 명지전문대학교 체육관에서 개최됩니다.</p>
+          <p>2016년 시작된 국내 최초 인비테이셔널의 권위를 이어가는 SPYDER BJJ SUPER SERIES. 2026년 PART 2는 명지전문대학교 예체능관 3층에서 개최됩니다.</p>
         </div>
         <div class="footer-col">
           <h5>QUICK LINKS</h5>
