@@ -663,7 +663,7 @@ section{ position:relative; z-index:1; }
 .story-copy p{
   color:var(--mute);
   font-size:15px;
-  line-height:2;
+  line-height:1.65;
   margin-bottom:14px;
 }
 @media (max-width:900px){
