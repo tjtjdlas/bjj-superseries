@@ -13,5 +13,13 @@
       "label": "성별"
     }
   ],
-  "athletes": []
+  "athletes": [
+    {
+      "name": "전진우",
+      "team": "스",
+      "weight": "스",
+      "age": "스",
+      "gender": "스"
+    }
+  ]
 }
