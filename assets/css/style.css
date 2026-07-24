@@ -256,8 +256,10 @@ p{ margin:0; }
 .hero-banner-img{
   display:block;
   width:100%;
+  max-width:2560px;
   height:auto;
   aspect-ratio:2560/640;
+  margin:0 auto;
 }
 .hero-content{
   position:relative;
