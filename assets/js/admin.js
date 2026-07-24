@@ -3,6 +3,10 @@
 // roster.json and replacing assets/data/roster.json in the repo.
 (() => {
   const STORAGE_KEY = 'spyderRosterDraft';
+  const TOKEN_KEY = 'spyderGithubToken';
+  const REPO = 'tjtjdlas/bjj-superseries';
+  const FILE_PATH = 'assets/data/roster.json';
+  const BRANCH = 'main';
   const DEFAULT_STATE = {
     categories: [
       { key: 'weight', label: '체급' },
@@ -25,6 +29,12 @@
   const exportBtn = document.querySelector('#exportBtn');
   const loadLiveBtn = document.querySelector('#loadLiveBtn');
   const resetBtn = document.querySelector('#resetBtn');
+  const ghTokenInput = document.querySelector('#ghTokenInput');
+  const ghTokenSaveBtn = document.querySelector('#ghTokenSaveBtn');
+  const ghTokenClearBtn = document.querySelector('#ghTokenClearBtn');
+  const ghTokenStatus = document.querySelector('#ghTokenStatus');
+  const publishBtn = document.querySelector('#publishBtn');
+  const publishStatus = document.querySelector('#publishStatus');
 
   function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
 
@@ -188,6 +198,88 @@
     renderAll();
   });
 
+  // ---------- GitHub token (stored only in this browser) ----------
+  function getToken() {
+    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function renderTokenStatus() {
+    ghTokenStatus.textContent = getToken()
+      ? '토큰이 이 브라우저에 저장되어 있습니다. "지금 사이트에 반영하기"를 바로 쓸 수 있습니다.'
+      : '아직 저장된 토큰이 없습니다. 저장 전까지는 [05]의 반영 버튼을 쓸 수 없습니다.';
+  }
+
+  ghTokenSaveBtn.addEventListener('click', () => {
+    const val = ghTokenInput.value.trim();
+    if (!val) { alert('토큰을 입력해 주세요.'); return; }
+    localStorage.setItem(TOKEN_KEY, val);
+    ghTokenInput.value = '';
+    renderTokenStatus();
+    alert('토큰을 저장했습니다.');
+  });
+
+  ghTokenClearBtn.addEventListener('click', () => {
+    if (!confirm('저장된 토큰을 삭제할까요?')) return;
+    localStorage.removeItem(TOKEN_KEY);
+    renderTokenStatus();
+  });
+
+  // ---------- Publish directly to GitHub via Contents API ----------
+  function base64EncodeUtf8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  publishBtn.addEventListener('click', async () => {
+    const token = getToken();
+    if (!token) {
+      alert('먼저 [04]에서 GitHub 토큰을 저장해 주세요.');
+      return;
+    }
+    if (!confirm(`선수 ${state.athletes.length}명을 실제 사이트에 바로 반영할까요?`)) return;
+
+    const apiUrl = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json'
+    };
+
+    publishBtn.disabled = true;
+    publishStatus.textContent = '반영 중...';
+
+    try {
+      const getRes = await fetch(apiUrl, { headers, cache: 'no-store' });
+      if (!getRes.ok) {
+        throw new Error(getRes.status === 401 || getRes.status === 403
+          ? '토큰이 유효하지 않거나 권한이 부족합니다. [04]에서 토큰을 다시 확인해 주세요.'
+          : `현재 파일 정보를 가져오지 못했습니다 (상태 ${getRes.status})`);
+      }
+      const fileInfo = await getRes.json();
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `관리자 페이지에서 명단 업데이트 (${state.athletes.length}명)`,
+          content: base64EncodeUtf8(JSON.stringify(state, null, 2)),
+          sha: fileInfo.sha,
+          branch: BRANCH
+        })
+      });
+
+      if (!putRes.ok) {
+        const err = await putRes.json().catch(() => ({}));
+        throw new Error(err.message || `반영에 실패했습니다 (상태 ${putRes.status})`);
+      }
+
+      publishStatus.textContent = '반영 완료! 1분 정도 후 실제 사이트에 업데이트됩니다.';
+    } catch (e) {
+      publishStatus.textContent = '오류: ' + e.message;
+      alert('반영 중 오류가 발생했습니다: ' + e.message);
+    } finally {
+      publishBtn.disabled = false;
+    }
+  });
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -199,6 +291,7 @@
     renderCategories();
     renderPasteHint();
     renderEditTable();
+    renderTokenStatus();
   }
 
   renderAll();
