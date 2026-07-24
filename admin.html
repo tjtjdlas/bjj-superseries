@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>선수 명단 관리자 | SPYDER BJJ SUPER SERIES</title>
-<link rel="stylesheet" href="assets/css/style.css?v=7">
+<link rel="stylesheet" href="assets/css/style.css?v=13">
 <style>
   .admin-wrap{ max-width:1040px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 100px; }
   .admin-bar{
@@ -14,10 +14,10 @@
     border-bottom:1px solid var(--line);
   }
   .admin-bar .inner{ max-width:1040px; margin:0 auto; padding:0 24px; width:100%; display:flex; align-items:center; justify-content:space-between; }
-  .admin-title{ font-family:var(--mono); font-size:13px; letter-spacing:1px; color:var(--white); }
+  .admin-title{ font-family:var(--font); font-size:13px; letter-spacing:0; color:var(--white); }
   .admin-title a{ color:var(--mute-2); }
   .admin-block{ border:1px solid var(--line); padding:32px; margin-bottom:32px; }
-  .admin-block h2{ font-family:var(--mono); font-size:14px; letter-spacing:1px; text-transform:uppercase; color:var(--white); margin-bottom:8px; }
+  .admin-block h2{ font-family:var(--font); font-weight:700; font-size:14px; letter-spacing:0; text-transform:uppercase; color:var(--white); margin-bottom:8px; }
   .admin-block .desc{ color:var(--mute); font-size:13.5px; margin-bottom:22px; line-height:1.7; }
   .cat-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
   .cat-row input{
@@ -27,24 +27,24 @@
   .cat-row input:focus{ outline:none; border-color:var(--red); }
   .cat-row button, .row-del{
     background:none; border:1px solid var(--line); color:var(--mute);
-    padding:9px 14px; cursor:pointer; font-family:var(--mono); font-size:12px;
+    padding:9px 14px; cursor:pointer; font-family:var(--font); font-size:12px;
     white-space:nowrap; flex-shrink:0;
   }
   .cat-row button:hover, .row-del:hover{ border-color:var(--red); color:var(--red); }
   .paste-hint{
-    font-family:var(--mono); font-size:12px; color:var(--gold);
+    font-family:var(--font); font-size:12px; color:var(--gold);
     background:var(--bg-card); border:1px solid var(--line); padding:10px 14px; margin-bottom:14px;
     overflow-x:auto; white-space:nowrap;
   }
   textarea#pasteArea{
     width:100%; min-height:160px; background:var(--bg-card); border:1px solid var(--line);
-    color:var(--white); padding:14px; font-family:var(--mono); font-size:13px; resize:vertical;
+    color:var(--white); padding:14px; font-family:var(--font); font-size:13px; resize:vertical;
   }
   textarea#pasteArea:focus{ outline:none; border-color:var(--red); }
   .admin-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
   .edit-table{ width:100%; border-collapse:collapse; }
   .edit-table th{
-    font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    font-family:var(--font); font-weight:700; font-size:11px; letter-spacing:0.5px; text-transform:uppercase;
     color:var(--mute-2); text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);
   }
   .edit-table td{ padding:6px; border-bottom:1px solid var(--line); }
@@ -113,6 +113,6 @@
 
 </div>
 
-<script src="assets/js/admin.js?v=1"></script>
+<script src="assets/js/admin.js?v=2"></script>
 </body>
 </html>

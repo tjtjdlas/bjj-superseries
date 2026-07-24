@@ -2,6 +2,16 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Gallery "load more"
+  const galleryMoreBtn = document.querySelector('#galleryMoreBtn');
+  if (galleryMoreBtn) {
+    const grid = document.querySelector('.gallery-grid');
+    galleryMoreBtn.addEventListener('click', () => {
+      const expanded = grid.classList.toggle('expanded');
+      galleryMoreBtn.textContent = expanded ? '접기' : '더보기';
+    });
+  }
+
   // Brand story image slider
   const slider = document.querySelector('#storySlider');
   if (slider) {

@@ -262,7 +262,7 @@ p{ margin:0; }
   margin-right:28px;
 }
 .hero-meta div:last-child{ border-right:none; margin-right:0; }
-.hero-meta b{ color:var(--mute-2); font-weight:500; font-family:var(--mono); font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; }
+.hero-meta b{ color:var(--mute-2); font-weight:700; font-family:var(--font); font-size:10.5px; letter-spacing:0.5px; text-transform:uppercase; }
 .hero-meta span, .hero-meta{ font-size:14px; }
 .hero-actions{
   margin-top:36px;
@@ -281,7 +281,7 @@ p{ margin:0; }
   padding:17px 28px;
   font-size:13px;
   font-weight:700;
-  font-family:var(--mono);
+  font-family:var(--font);
   letter-spacing:0.5px;
   cursor:pointer;
   border:1px solid var(--white);
@@ -301,7 +301,7 @@ p{ margin:0; }
 /* text-only arrow link (used inline, e.g. ticket CTA text) */
 .link-arrow{
   display:inline-flex; align-items:center; gap:8px;
-  font-family:var(--mono); font-size:13px; font-weight:700;
+  font-family:var(--font); font-size:13px; font-weight:700;
   letter-spacing:0.5px; text-transform:uppercase;
   border-bottom:1px solid currentColor; padding-bottom:3px;
 }
@@ -407,7 +407,7 @@ section{ position:relative; z-index:1; }
   z-index:2;
 }
 .s-label{
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:12px;
   letter-spacing:1.5px;
   color:var(--mute-2);
@@ -676,7 +676,7 @@ section{ position:relative; z-index:1; }
   font-size:26px;
   color:var(--gold);
 }
-.prize-row div span{ font-size:11px; color:var(--mute); letter-spacing:1.5px; font-family:var(--mono); text-transform:uppercase; }
+.prize-row div span{ font-size:11px; color:var(--mute); letter-spacing:0.5px; font-family:var(--font); text-transform:uppercase; }
 
 @media (max-width:700px){
   .match-banner .inner{ padding:32px 24px; max-width:100%; }
@@ -738,7 +738,7 @@ section{ position:relative; z-index:1; }
   background:rgba(5,6,8,0.85);
   border:1px solid var(--red);
   color:#fff;
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:12px;
   font-weight:700;
   padding:9px 14px;
@@ -758,7 +758,7 @@ section{ position:relative; z-index:1; }
   font-size:14px;
 }
 .venue-info ul li:last-child{ border-bottom:none; }
-.venue-info ul li b{ color:var(--mute-2); font-family:var(--mono); font-size:12px; letter-spacing:1px; text-transform:uppercase; min-width:90px; font-weight:500; flex-shrink:0; }
+.venue-info ul li b{ color:var(--mute-2); font-family:var(--font); font-size:12px; letter-spacing:1px; text-transform:uppercase; min-width:90px; font-weight:700; flex-shrink:0; }
 @media (max-width:860px){ .venue-grid{ grid-template-columns:1fr; } .venue-map{ border-right:none; border-bottom:1px solid var(--line); } }
 
 /* ---------- GALLERY ---------- */
@@ -783,6 +783,8 @@ section{ position:relative; z-index:1; }
 }
 .gallery-grid a:hover img{ transform:scale(1.06); filter:grayscale(0); }
 .gallery-grid a:nth-child(5n+1){ grid-column:span 2; grid-row:span 2; }
+.gallery-grid a.gallery-extra{ display:none; }
+.gallery-grid.expanded a.gallery-extra{ display:block; }
 @media (max-width:860px){
   .gallery-grid{ grid-template-columns:repeat(2,1fr); }
   .gallery-grid a:nth-child(5n+1){ grid-column:span 1; grid-row:span 1; }
@@ -933,7 +935,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   align-self:flex-start;
 }
 .ticket-name{
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:12.5px;
   letter-spacing:1.5px;
   color:var(--mute);
@@ -949,8 +951,8 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   color:var(--white);
   margin-bottom:4px;
 }
-.ticket-price span{ font-size:14px; color:var(--mute); font-family:var(--mono); font-weight:400; }
-.ticket-note{ font-family:var(--mono); font-size:11.5px; color:var(--mute-2); margin-bottom:30px; }
+.ticket-price span{ font-size:14px; color:var(--mute); font-family:var(--font); font-weight:400; }
+.ticket-note{ font-family:var(--font); font-size:11.5px; color:var(--mute-2); margin-bottom:30px; }
 .ticket-features{ flex:1; margin-bottom:30px; }
 .ticket-features li{
   display:flex;
@@ -1057,7 +1059,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   border-right:1px solid var(--line);
   color:var(--mute);
   padding:14px 24px;
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:12.5px;
   font-weight:500;
   letter-spacing:0.5px;
@@ -1085,7 +1087,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   margin:0 auto 20px;
   opacity:0.5;
 }
-.empty-state h4{ color:var(--white); font-size:17px; margin-bottom:12px; font-family:var(--mono); text-transform:uppercase; letter-spacing:0.5px; }
+.empty-state h4{ color:var(--white); font-size:17px; margin-bottom:12px; font-family:var(--font); font-weight:700; letter-spacing:0; }
 .empty-state p{ font-size:14px; max-width:420px; margin:0 auto; }
 
 .roster-table{ width:100%; border-collapse:collapse; }
@@ -1095,7 +1097,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   font-size:14px;
   text-align:left;
 }
-.roster-table th{ color:var(--mute-2); font-family:var(--mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }
+.roster-table th{ color:var(--mute-2); font-family:var(--font); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700; }
 .roster-table td{ color:var(--mute); }
 .belt-dot{
   display:inline-block;
@@ -1123,7 +1125,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   border:1px solid var(--line);
   color:var(--white);
   padding:14px 18px;
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:13px;
 }
 .search-row input:focus{ outline:none; border-color:var(--red); }
@@ -1140,7 +1142,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   border:1px solid var(--line);
   color:var(--white);
   padding:10px 14px;
-  font-family:var(--mono);
+  font-family:var(--font);
   font-size:12.5px;
   cursor:pointer;
 }
