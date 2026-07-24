@@ -276,16 +276,16 @@ p{ margin:0; }
   border-top:1px solid var(--line);
 }
 .hero-meta div{
-  display:flex; flex-direction:column; gap:6px;
-  padding:16px 28px 16px 0;
+  display:flex; flex-direction:column; gap:8px;
+  padding:22px 34px 22px 0;
   border-right:1px solid var(--line);
-  margin-right:28px;
+  margin-right:34px;
 }
 .hero-meta div:last-child{ border-right:none; margin-right:0; }
-.hero-meta b{ color:var(--mute-2); font-weight:700; font-family:var(--font); font-size:10.5px; letter-spacing:0.5px; text-transform:uppercase; }
-.hero-meta span, .hero-meta{ font-size:14px; }
+.hero-meta b{ color:var(--mute-2); font-weight:700; font-family:var(--font); font-size:13px; letter-spacing:0.5px; text-transform:uppercase; }
+.hero-meta span, .hero-meta{ font-size:17px; }
 .hero-actions{
-  margin-top:36px;
+  margin-top:40px;
   display:flex;
   flex-wrap:wrap;
   gap:16px;
@@ -316,7 +316,7 @@ p{ margin:0; }
 .btn-outline{ border-color:rgba(255,255,255,0.3); color:var(--white); background:transparent; }
 .btn-outline:hover{ border-color:var(--white); background:rgba(255,255,255,0.06); }
 .btn-block{ width:100%; }
-.btn-lg{ padding:20px 32px; font-size:13.5px; }
+.btn-lg{ padding:26px 38px; font-size:16px; }
 
 /* text-only arrow link (used inline, e.g. ticket CTA text) */
 .link-arrow{
@@ -369,7 +369,7 @@ p{ margin:0; }
   grid-template-columns:repeat(4,1fr);
 }
 .stat-item{
-  padding:32px 24px;
+  padding:44px 24px;
   border-right:1px solid var(--line);
   text-align:center;
 }
@@ -377,15 +377,15 @@ p{ margin:0; }
 .stat-num{
   font-family:var(--font);
   font-weight:900;
-  font-size:clamp(24px,3.6vw,40px);
+  font-size:clamp(32px,4.5vw,56px);
   color:var(--white);
   letter-spacing:-0.5px;
   font-variant-numeric:tabular-nums;
 }
 .stat-label{
-  margin-top:8px;
+  margin-top:10px;
   font-family:var(--mono);
-  font-size:11px;
+  font-size:13px;
   letter-spacing:1px;
   color:var(--mute-2);
   text-transform:uppercase;
