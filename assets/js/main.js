@@ -11,23 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
       attributionControl: true
     }).setView(coords, 16);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd',
       attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
     L.marker(coords).addTo(map);
-  }
-
-  // Gallery "load more"
-  const galleryMoreBtn = document.querySelector('#galleryMoreBtn');
-  if (galleryMoreBtn) {
-    const grid = document.querySelector('.gallery-grid');
-    galleryMoreBtn.addEventListener('click', () => {
-      const expanded = grid.classList.toggle('expanded');
-      galleryMoreBtn.textContent = expanded ? '접기' : '더보기';
-    });
   }
 
   // Brand story image slider
@@ -116,8 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Word-by-word text reveal setup (must run before observer attaches)
+  document.querySelectorAll('.reveal-text').forEach(el => {
+    const words = el.textContent.trim().split(/\s+/);
+    el.innerHTML = words.map((w, i) =>
+      `<span class="word" style="transition-delay:${i * 55}ms">${w}</span>`
+    ).join(' ');
+  });
+
   // Reveal on scroll
-  const revealEls = document.querySelectorAll('.reveal');
+  const revealEls = document.querySelectorAll('.reveal, .reveal-text');
   if ('IntersectionObserver' in window && revealEls.length) {
     const io = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -161,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.accordion-item').forEach(item => {
     const btn = item.querySelector('button');
     const panel = item.querySelector('.accordion-panel');
+    if (item.classList.contains('open')) {
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+    }
     btn.addEventListener('click', () => {
       const isOpen = item.classList.contains('open');
       item.parentElement.querySelectorAll('.accordion-item').forEach(other => {

@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>참가 선수 명단 | SPYDER BJJ SUPER SERIES 2026 PART 2</title>
 <meta name="description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 참가 선수 명단. 이름 검색과 체급/연령/성별 필터로 참가자를 확인할 수 있습니다.">
-<link rel="stylesheet" href="assets/css/style.css?v=29">
+<link rel="icon" type="image/png" href="assets/img/spyder-bug.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="참가 선수 명단 | SPYDER BJJ SUPER SERIES 2026 PART 2">
+<meta property="og:description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 참가 선수 명단. 이름 검색과 체급/연령/성별 필터로 참가자를 확인할 수 있습니다.">
+<meta property="og:image" content="assets/img/poster-main.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/style.css?v=42">
 </head>
 <body>
 
@@ -17,7 +23,7 @@
     <a href="index.html" class="brand">
       <img src="assets/img/spyder-bug.png" class="spider-icon" alt="">
       <img src="assets/img/spyder-wordmark.png" class="wordmark" alt="SPYDER">
-      <small>BJJ SUPERSERIES</small>
+      <img src="assets/img/bjj-superseries-logo-white.png" class="bjj-logo" alt="BJJ SUPERSERIES">
     </a>
     <div class="nav-links">
       <a href="index.html#overview">대회 개요</a>
@@ -34,9 +40,14 @@
 <!-- ATHLETE ROSTER -->
 <section class="section bg-alt">
   <div class="container">
-    <div class="section-head reveal">
-      <h2 class="section-title display" style="font-size:clamp(26px,4vw,36px);">참가 선수 명단</h2>
-      <p class="section-desc">이름 검색과 카테고리 필터를 함께 사용할 수 있습니다.</p>
+    <div class="section-head section-head-center section-head-band">
+      <div class="tag-pill-row">
+        <span class="tag-line"></span>
+        <span class="tag-pill">PARTICIPANTS</span>
+        <span class="tag-line"></span>
+      </div>
+      <h2 class="section-title display reveal-text" style="font-size:clamp(26px,4vw,36px);">참가 선수 명단</h2>
+      <p class="section-desc reveal" style="transition-delay:.15s;">이름 검색과 카테고리 필터를 함께 사용할 수 있습니다.</p>
     </div>
 
     <div class="search-row reveal">
@@ -62,9 +73,9 @@
 <!-- TIMETABLE -->
 <section class="section">
   <div class="container">
-    <div class="section-head reveal">
-      <h2 class="section-title display" style="font-size:clamp(26px,4vw,36px);">대회 타임테이블</h2>
-      <p class="section-desc">세부 시간은 대행사 확인 후 확정되며 현재는 잠정 안입니다. (*TBD)</p>
+    <div class="section-head">
+      <h2 class="section-title display reveal-text" style="font-size:clamp(26px,4vw,36px);">대회 타임테이블</h2>
+      <p class="section-desc reveal" style="transition-delay:.15s;">세부 시간은 대행사 확인 후 확정되며 현재는 잠정 안입니다. (*TBD)</p>
     </div>
     <div class="table-scroll reveal">
       <table class="timetable">
@@ -97,8 +108,10 @@
 
 <footer id="footer-include"></footer>
 
-<script src="assets/js/main.js?v=29"></script>
-<script src="assets/js/footer.js?v=29"></script>
-<script src="assets/js/roster.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/main.js?v=37"></script>
+<script src="assets/js/footer.js?v=37"></script>
+<script src="assets/js/roster.js?v=5"></script>
 </body>
 </html>
