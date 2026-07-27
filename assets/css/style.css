@@ -418,18 +418,38 @@ section{ position:relative; z-index:1; }
 .section-tight{ padding:70px 0; }
 .section-head{ position:relative; margin-bottom:64px; max-width:680px; }
 
-/* Soft glow blob behind headline text for depth (red = default, gold on alt sections) */
-.section-head::before{
+/* Faint spiderweb corner motif — fades/unfurls in as each section scrolls into view */
+section.section::before,
+.cta-band::before{
   content:'';
   position:absolute;
-  top:-90px; left:-120px;
-  width:380px; height:380px;
-  background:radial-gradient(circle, rgba(216,30,5,0.30) 0%, rgba(216,30,5,0) 70%);
-  z-index:-1;
+  top:0; left:0;
+  width:260px; height:260px;
+  max-width:38vw; max-height:38vw;
+  background-image:url('../img/spider-web-corner.svg');
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:top left;
+  opacity:0;
+  transform:scale(0.82) rotate(-6deg);
+  transform-origin:top left;
+  transition:opacity 1.7s ease, transform 1.7s cubic-bezier(.16,1,.3,1);
   pointer-events:none;
+  z-index:0;
 }
-.bg-alt .section-head::before{
-  background:radial-gradient(circle, rgba(217,178,94,0.22) 0%, rgba(217,178,94,0) 70%);
+section.section:nth-of-type(even)::before{
+  left:auto; right:0;
+  background-position:top right;
+  transform:scale(0.82) rotate(6deg) scaleX(-1);
+  transform-origin:top right;
+}
+section.section.in::before,
+.cta-band.in::before{
+  opacity:0.1;
+  transform:scale(1) rotate(0deg);
+}
+section.section:nth-of-type(even).in::before{
+  transform:scale(1) rotate(0deg) scaleX(-1);
 }
 .eyebrow{
   font-family:var(--mono);
@@ -894,15 +914,6 @@ section{ position:relative; z-index:1; }
   text-align:center;
   position:relative;
   overflow:hidden;
-}
-.cta-band::before{
-  content:'';
-  position:absolute;
-  top:50%; left:50%;
-  width:520px; height:520px;
-  transform:translate(-50%,-60%);
-  background:radial-gradient(circle, rgba(216,30,5,0.24) 0%, rgba(216,30,5,0) 68%);
-  pointer-events:none;
 }
 .cta-band h3{
   position:relative;

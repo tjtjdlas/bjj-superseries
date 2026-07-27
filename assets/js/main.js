@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Reveal on scroll
-  const revealEls = document.querySelectorAll('.reveal, .reveal-text');
+  const revealEls = document.querySelectorAll('.reveal, .reveal-text, .section, .cta-band');
   if ('IntersectionObserver' in window && revealEls.length) {
     const io = new IntersectionObserver((entries) => {
       entries.forEach(entry => {

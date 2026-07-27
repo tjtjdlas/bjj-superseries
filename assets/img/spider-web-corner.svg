@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round">
+  <!-- radiating spokes -->
+  <path d="M0 0 L378.6 33.1" />
+  <path d="M0 0 L357.1 130.0" />
+  <path d="M0 0 L311.3 218.0" />
+  <path d="M0 0 L244.3 291.1" />
+  <path d="M0 0 L160.6 344.4" />
+  <path d="M0 0 L66.0 374.2" />
+  <!-- connecting rings (hand-drawn, slightly irregular) -->
+  <path d="M71.7 6.3 L63.9 23.3 L61.4 43.0 L42.4 50.6 L31.3 67.1 L10.9 62.0" opacity="0.9" />
+  <path d="M149.4 13.1 L136.3 49.6 L127.0 88.9 L90.0 107.2 L64.2 137.8 L24.7 139.8" opacity="0.75" />
+  <path d="M229.1 20.1 L211.4 77.0 L192.5 134.8 L141.4 168.5 L98.0 210.3 L38.6 218.6" opacity="0.55" />
+</svg>
