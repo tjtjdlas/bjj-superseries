@@ -25,17 +25,17 @@
   .cat-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
   .cat-row input{
     flex:1; min-width:0; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
-    padding:10px 16px; font-family:var(--font); font-size:14px;
+    padding:10px 16px; font-family:var(--font); font-size:14px; line-height:1;
   }
   .cat-row input:focus{ outline:none; border-color:var(--red); }
   .cat-row button, .row-del{
     background:none; border:1px solid var(--line); border-radius:var(--r-pill); color:var(--mute);
-    padding:9px 16px; cursor:pointer; font-family:var(--font); font-size:12px;
+    padding:9px 16px; cursor:pointer; font-family:var(--font); font-size:12px; line-height:1;
     white-space:nowrap; flex-shrink:0;
   }
   .cat-row button:hover, .row-del:hover{ border-color:var(--red); color:var(--red); }
   .paste-hint{
-    font-family:var(--font); font-size:12px; color:var(--gold);
+    font-family:var(--font); font-size:12px; line-height:1.4; color:var(--gold);
     background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-sm); padding:10px 14px; margin-bottom:14px;
     overflow-x:auto; white-space:nowrap;
   }
@@ -72,7 +72,7 @@
   #adminGate .lock-label{ font-family:var(--font); font-size:13px; color:var(--mute); margin-bottom:18px; }
   #adminGate input{
     width:100%; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
-    padding:14px 16px; font-family:var(--font); font-size:14px; text-align:center; margin-bottom:14px;
+    padding:14px 16px; font-family:var(--font); font-size:14px; line-height:1; text-align:center; margin-bottom:14px;
   }
   #adminGate input:focus{ outline:none; border-color:var(--red); }
   #adminGate .btn{ width:100%; }
