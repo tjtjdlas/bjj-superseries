@@ -11,7 +11,7 @@
 <meta property="og:description" content="2026년 10월 18일, 명지전문대학교 예체능관 3층에서 열리는 SPYDER BJJ SUPER SERIES 2026 PART 2. 얼리버드 티켓 오픈 및 참가 선수 명단 안내.">
 <meta property="og:image" content="assets/img/poster-main.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="assets/css/style.css?v=42">
+<link rel="stylesheet" href="assets/css/style.css?v=50">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
 <body>
@@ -133,11 +133,14 @@
 <div class="divider"></div>
 
 <!-- BRAND STORY -->
-<section class="story-split">
-  <div class="story-img" style="background-image:url('assets/img/arena-wide-cropped.jpg'); background-position:center 40%;"></div>
-  <div class="story-copy">
-    <h2 class="section-title display reveal-text" style="margin-bottom:20px; font-size:clamp(22px,3.5vw,36px);">거미줄처럼 얽힌 도전의 장</h2>
-    <p class="reveal" style="transition-delay:.15s;">Founded in 2016 with the revolutionary Invitational BJJ Championship in Seoul, SPYDER rapidly became a prestigious global arena for world-class black belts. From the historic King of Kings tournament to the visionary 'Road to Black' project, SPYDER has established itself as a premier combat sports curator and a dominant force in grappling. Today, by evolving into an open-access 'Super Series,' SPYDER expands its heritage from elite competition to the broader BJJ community—driving the global evolution of competitive Jiu-Jitsu with technical gear and authentic combat culture.</p>
+<section class="story-full">
+  <div class="story-full-bg" style="background-image:url('assets/img/story-banner.jpg');"></div>
+  <div class="story-full-scrim"></div>
+  <div class="container">
+    <div class="story-full-copy">
+      <h2 class="section-title display reveal-text" style="margin-bottom:20px; font-size:clamp(22px,3.5vw,36px);">거미줄처럼 얽힌 도전의 장</h2>
+      <p class="reveal" style="transition-delay:.15s;">Founded in 2016 with the revolutionary Invitational BJJ Championship in Seoul, SPYDER rapidly became a prestigious global arena for world-class black belts. From the historic King of Kings tournament to the visionary 'Road to Black' project, SPYDER has established itself as a premier combat sports curator and a dominant force in grappling. Today, by evolving into an open-access 'Super Series,' SPYDER expands its heritage from elite competition to the broader BJJ community—driving the global evolution of competitive Jiu-Jitsu with technical gear and authentic combat culture.</p>
+    </div>
   </div>
 </section>
 
@@ -152,6 +155,11 @@
     <div class="venue-grid reveal">
       <div class="venue-map">
         <div id="venueMap"></div>
+        <div class="map-zoom-control">
+          <span class="map-zoom-label">축소</span>
+          <input type="range" id="mapZoomRange" min="0" max="100" value="60" step="1" aria-label="지도 확대/축소">
+          <span class="map-zoom-label">확대</span>
+        </div>
         <a href="https://naver.me/58NGkoBA" target="_blank" rel="noopener" class="map-link-btn">네이버 지도에서 길찾기 ↗</a>
       </div>
       <div class="venue-info">
@@ -225,7 +233,7 @@
 <a href="tickets.html" class="floating-ticket">TICKET</a>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="assets/js/main.js?v=33"></script>
+<script src="assets/js/main.js?v=41"></script>
 <script src="assets/js/footer.js?v=33"></script>
 </body>
 </html>

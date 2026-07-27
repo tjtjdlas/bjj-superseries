@@ -6,18 +6,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const mapEl = document.querySelector('#venueMap');
   if (mapEl && window.L) {
     const coords = [37.5836983, 126.9249649];
+    const minZoom = 13;
+    const maxZoom = 19;
     const map = L.map(mapEl, {
       scrollWheelZoom: false,
-      attributionControl: true
+      attributionControl: false,
+      minZoom,
+      maxZoom
     }).setView(coords, 16);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
+      maxZoom,
+      subdomains: 'abcd'
     }).addTo(map);
 
     L.marker(coords).addTo(map);
+
+    // Zoom gauge slider (0-100%) as a replacement for scroll-wheel zoom
+    const zoomRange = document.querySelector('#mapZoomRange');
+    if (zoomRange) {
+      const zoomToPercent = (zoom) => Math.round((zoom - minZoom) / (maxZoom - minZoom) * 100);
+      const percentToZoom = (percent) => minZoom + (percent / 100) * (maxZoom - minZoom);
+
+      zoomRange.value = zoomToPercent(map.getZoom());
+      zoomRange.addEventListener('input', () => {
+        map.setZoom(percentToZoom(Number(zoomRange.value)));
+      });
+      map.on('zoomend', () => {
+        zoomRange.value = zoomToPercent(map.getZoom());
+      });
+    }
   }
 
   // Brand story image slider
