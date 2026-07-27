@@ -850,7 +850,7 @@ section.section:nth-of-type(even).in::before{
 .venue-info{
   padding:40px;
 }
-.venue-info h4{ font-size:19px; margin-bottom:20px; font-family:var(--mono); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
+.venue-info h4{ font-size:19px; margin-bottom:20px; font-family:var(--font); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
 .venue-info ul li{
   display:flex;
   gap:12px;
