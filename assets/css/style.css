@@ -619,9 +619,10 @@ section{ position:relative; z-index:1; }
 }
 .story-full-bg{
   position:absolute; inset:0;
-  background-size:cover;
-  background-position:center;
+  background-size:100% auto;
+  background-position:top center;
   background-repeat:no-repeat;
+  background-color:var(--bg-0);
 }
 .story-full-scrim{
   position:absolute; inset:0;
