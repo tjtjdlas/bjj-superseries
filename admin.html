@@ -16,40 +16,47 @@
   .admin-bar .inner{ max-width:1040px; margin:0 auto; padding:0 24px; width:100%; display:flex; align-items:center; justify-content:space-between; }
   .admin-title{ font-family:var(--font); font-size:13px; letter-spacing:0; color:var(--white); }
   .admin-title a{ color:var(--mute-2); }
-  .admin-block{ border:1px solid var(--line); padding:32px; margin-bottom:32px; }
+  .admin-block{
+    border:1px solid var(--card-border); border-radius:var(--r-lg); padding:32px; margin-bottom:32px;
+    background:var(--card-bg), var(--bg-card); background-blend-mode:overlay; box-shadow:var(--card-shadow);
+  }
   .admin-block h2{ font-family:var(--font); font-weight:700; font-size:14px; letter-spacing:0; text-transform:uppercase; color:var(--white); margin-bottom:8px; }
   .admin-block .desc{ color:var(--mute); font-size:13.5px; margin-bottom:22px; line-height:1.7; }
   .cat-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
   .cat-row input{
-    flex:1; min-width:0; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
-    padding:10px 14px; font-family:var(--font); font-size:14px;
+    flex:1; min-width:0; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
+    padding:10px 16px; font-family:var(--font); font-size:14px;
   }
   .cat-row input:focus{ outline:none; border-color:var(--red); }
   .cat-row button, .row-del{
-    background:none; border:1px solid var(--line); color:var(--mute);
-    padding:9px 14px; cursor:pointer; font-family:var(--font); font-size:12px;
+    background:none; border:1px solid var(--line); border-radius:var(--r-pill); color:var(--mute);
+    padding:9px 16px; cursor:pointer; font-family:var(--font); font-size:12px;
     white-space:nowrap; flex-shrink:0;
   }
   .cat-row button:hover, .row-del:hover{ border-color:var(--red); color:var(--red); }
   .paste-hint{
     font-family:var(--font); font-size:12px; color:var(--gold);
-    background:var(--bg-card); border:1px solid var(--line); padding:10px 14px; margin-bottom:14px;
+    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-sm); padding:10px 14px; margin-bottom:14px;
     overflow-x:auto; white-space:nowrap;
   }
   textarea#pasteArea{
-    width:100%; min-height:160px; background:var(--bg-card); border:1px solid var(--line);
+    width:100%; min-height:160px; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-md);
     color:var(--white); padding:14px; font-family:var(--font); font-size:13px; resize:vertical;
   }
   textarea#pasteArea:focus{ outline:none; border-color:var(--red); }
   .admin-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .edit-table-wrap{
+    border:1px solid var(--card-border); border-radius:var(--r-lg); overflow:auto; background:var(--bg-card);
+  }
   .edit-table{ width:100%; border-collapse:collapse; }
   .edit-table th{
     font-family:var(--font); font-weight:700; font-size:11px; letter-spacing:0.5px; text-transform:uppercase;
     color:var(--mute-2); text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);
   }
   .edit-table td{ padding:6px; border-bottom:1px solid var(--line); }
+  .edit-table tr:last-child td{ border-bottom:none; }
   .edit-table input{
-    width:100%; background:transparent; border:1px solid transparent; color:var(--white);
+    width:100%; background:transparent; border:1px solid transparent; border-radius:var(--r-sm); color:var(--white);
     padding:8px; font-family:var(--font); font-size:13.5px;
   }
   .edit-table input:focus{ outline:none; border-color:var(--red); background:var(--bg-card); }
@@ -64,7 +71,7 @@
   #adminGate form{ width:100%; max-width:320px; text-align:center; }
   #adminGate .lock-label{ font-family:var(--font); font-size:13px; color:var(--mute); margin-bottom:18px; }
   #adminGate input{
-    width:100%; background:var(--bg-card); border:1px solid var(--line); color:var(--white);
+    width:100%; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
     padding:14px 16px; font-family:var(--font); font-size:14px; text-align:center; margin-bottom:14px;
   }
   #adminGate input:focus{ outline:none; border-color:var(--red); }
@@ -117,7 +124,7 @@
   <div class="admin-block">
     <h2>[ 03 ] 현재 등록된 선수 명단 <span id="rosterTotal" style="color:var(--mute-2); font-weight:400;"></span></h2>
     <p class="desc">셀을 직접 클릭해서 수정할 수 있습니다. 편집 중인 내용은 이 화면에만 있으며, [04]의 "지금 사이트에 반영하기"를 눌러야 실제 사이트에 저장됩니다.</p>
-    <div style="overflow-x:auto;">
+    <div class="edit-table-wrap">
       <table class="edit-table" id="editTable"></table>
     </div>
     <div class="admin-actions">
