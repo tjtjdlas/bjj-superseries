@@ -1,7 +1,10 @@
 /* ==================================================
    SPYDER BJJ SUPER SERIES 2026 PART 2 — Site Styles
-   Editorial / technical sports-brand system
+   Cyber-Athletic Future Genesis system
    ================================================== */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @font-face{
   font-family:'SCDream';
@@ -33,17 +36,19 @@
 }
 
 :root{
-  --bg-0:#060606;
-  --bg-1:#0a0a0a;
-  --bg-2:#101010;
-  --bg-card:#111111;
-  --line:#262626;
-  --line-2:#1a1a1a;
-  --white:#ffffff;
-  --mute:#9c9ea3;
-  --mute-2:#6b6d73;
-  --red:#d81e05;
-  --red-dark:#9a1503;
+  /* Cyber-Athletic Future Genesis palette */
+  --bg-0:#050507;
+  --bg-1:#0b0c10;
+  --bg-2:#121318;
+  --bg-card:#121318;
+  --line:#262832;
+  --line-2:#1a1b22;
+  --white:#f0f0f5;
+  --mute:#8a8b94;
+  --mute-2:#63646c;
+  --red:#e60012;
+  --red-dark:#9a0710;
+  --neon:#ff1a30;
   --gold:#d9b25e;
   --radius:0px;
   --r-sm:12px;
@@ -52,8 +57,9 @@
   --r-pill:999px;
   --maxw:1400px;
   --nav-h:76px;
-  --mono:'SCDream', sans-serif;
-  --font:'SCDream', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --font:'Pretendard', 'SCDream', sans-serif;
+  --font-display:'Orbitron', 'Pretendard', sans-serif;
 
   --outline-border:rgba(255,255,255,0.3);
   --outline-hover-bg:rgba(255,255,255,0.06);
@@ -270,31 +276,155 @@ p{ margin:0; }
   .brand small, .brand .bjj-logo{ display:none; }
 }
 
-/* ---------- HERO ---------- */
-.hero{
+/* ==================================================
+   HERO — Cyber-Athletic "The Dawn of Combat"
+   ================================================== */
+.hero-cyber{
   position:relative;
+  min-height:100vh;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:hidden;
   background:var(--bg-0);
   padding-top:var(--nav-h);
 }
-.hero-media{
-  position:relative;
-  width:100%;
-  max-width:2560px;
-  margin:0 auto;
+
+/* -- background layers -- */
+.hero-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; }
+.hero-bg-video, .hero-bg-fallback{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center 30%;
+  filter:grayscale(0.25) contrast(1.15) brightness(0.55);
 }
-.hero-banner-img{
-  display:block;
-  width:100%;
-  height:auto;
-  aspect-ratio:2560/640;
+.hero-bg-gradient{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(60% 55% at 78% 28%, rgba(230,0,18,0.18), transparent 65%),
+    radial-gradient(70% 60% at 15% 85%, rgba(255,26,48,0.10), transparent 70%),
+    linear-gradient(160deg, #0b0c10 0%, #050507 55%, #050507 100%);
 }
-.hero-content{
+.hero-bg-grid{
+  position:absolute; inset:-1px;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(240,240,245,0.05) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, rgba(240,240,245,0.05) 0 1px, transparent 1px 64px);
+  mask-image:radial-gradient(80% 70% at 60% 40%, #000 0%, transparent 75%);
+  animation:gridDrift 40s linear infinite;
+}
+@keyframes gridDrift{
+  0%{ transform:translate(0,0); }
+  100%{ transform:translate(64px,64px); }
+}
+.hero-scanlines{
+  position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px);
+  opacity:0.5;
+  mix-blend-mode:overlay;
+  pointer-events:none;
+}
+.hero-vignette{
+  position:absolute; inset:0;
+  background:radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(5,6,7,0.55) 85%, rgba(5,6,7,0.92) 100%);
+}
+
+/* -- foreground content -- */
+.hero-content-cyber{
   position:relative;
   z-index:2;
   width:100%;
-  padding:40px 24px 90px;
   max-width:var(--maxw);
   margin:0 auto;
+  padding:60px 24px 40px;
+}
+.hero-eyebrow-cyber{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--mono);
+  font-size:12.5px;
+  font-weight:500;
+  letter-spacing:2px;
+  color:var(--neon);
+  text-transform:uppercase;
+  margin-bottom:22px;
+  padding:8px 16px;
+  border:1px solid rgba(255,26,48,0.4);
+  border-radius:var(--r-pill);
+  background:rgba(230,0,18,0.08);
+}
+.hero-eyebrow-cyber::before{
+  content:'';
+  width:7px; height:7px;
+  border-radius:50%;
+  background:var(--neon);
+  box-shadow:0 0 8px 2px rgba(255,26,48,0.8);
+  animation:pulseDot 1.6s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.4; transform:scale(0.7); }
+}
+
+.hero-title-cyber{
+  font-family:var(--font-display);
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:-1px;
+  line-height:0.98;
+  color:var(--white);
+  font-size:clamp(40px, 8vw, 108px);
+  margin:0 0 28px;
+}
+.hero-title-cyber span{ display:block; }
+.hero-title-cyber .line-accent{ color:var(--red); }
+.hero-title-cyber .line-sub{
+  font-size:0.42em;
+  letter-spacing:2px;
+  color:var(--mute);
+  font-weight:700;
+  margin-top:10px;
+}
+
+/* glitch effect: chromatic-aberration duplicate layers, bursts on a timer via .glitching class */
+.glitch{ position:relative; }
+.glitch::before, .glitch::after{
+  content:attr(data-text);
+  position:absolute;
+  inset:0;
+  opacity:0;
+  overflow:hidden;
+  white-space:pre;
+}
+.glitch.glitching::before{
+  opacity:0.8;
+  color:var(--neon);
+  transform:translate(-3px,-1px);
+  clip-path:inset(10% 0 60% 0);
+  animation:glitchShift .35s steps(2,end) 1;
+}
+.glitch.glitching::after{
+  opacity:0.8;
+  color:#4ad9ff;
+  transform:translate(3px,1px);
+  clip-path:inset(55% 0 15% 0);
+  animation:glitchShift .35s steps(2,end) 1 reverse;
+}
+@keyframes glitchShift{
+  0%{ clip-path:inset(10% 0 60% 0); }
+  50%{ clip-path:inset(40% 0 30% 0); }
+  100%{ clip-path:inset(10% 0 60% 0); }
+}
+
+.hero-desc-cyber{
+  color:var(--mute);
+  font-size:15.5px;
+  line-height:1.8;
+  max-width:520px;
+  margin-bottom:36px;
 }
 .hero-actions{
   margin-top:0;
@@ -303,40 +433,73 @@ p{ margin:0; }
   gap:16px;
   align-items:center;
 }
+.btn-neon{
+  position:relative;
+  box-shadow:0 0 0 0 rgba(230,0,18,0.5);
+  animation:neonPulse 2.4s ease-in-out infinite;
+}
+@keyframes neonPulse{
+  0%,100%{ box-shadow:0 0 0 0 rgba(230,0,18,0.45); }
+  50%{ box-shadow:0 0 26px 4px rgba(230,0,18,0.45); }
+}
 
-/* ---------- HERO STAT PANEL (floats inside the banner photo, under the gi figure) ---------- */
-.hero-stats-float{
-  position:absolute;
-  z-index:3;
-  right:4%;
-  bottom:8%;
-  max-width:400px;
+/* -- countdown HUD bar -- */
+.hero-countdown{
+  position:relative;
+  z-index:2;
   display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:22px 24px 40px;
   flex-wrap:wrap;
-  gap:0;
-  padding:16px 24px;
-  background:rgba(5,6,8,0.55);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+}
+.cd-unit{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:64px;
+  padding:10px 14px;
   border:1px solid rgba(255,255,255,0.14);
-  box-shadow:0 20px 40px -20px rgba(0,0,0,0.6);
+  border-radius:var(--r-sm);
+  background:rgba(18,19,24,0.6);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
-.hero-stats-float div{
-  display:flex; flex-direction:column; gap:6px;
-  padding:0 26px 0 0;
-  margin-right:26px;
-  border-right:1px solid rgba(255,255,255,0.16);
+.cd-num{
+  font-family:var(--mono);
+  font-size:26px;
+  font-weight:700;
+  color:var(--white);
+  letter-spacing:1px;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 0 12px rgba(255,26,48,0.5);
 }
-.hero-stats-float div:last-child{ border-right:none; margin-right:0; padding-right:0; }
-.hero-stats-float b{ color:var(--mute); font-weight:700; font-family:var(--font); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
-.hero-stats-float span{ font-size:16px; font-weight:700; color:#fff; letter-spacing:-0.2px; }
-@media (max-width:900px){
-  .hero-stats-float{ right:3%; bottom:5%; padding:12px 18px; max-width:320px; }
-  .hero-stats-float div{ padding-right:16px; margin-right:16px; }
-  .hero-stats-float span{ font-size:14px; }
+.cd-label{
+  font-family:var(--mono);
+  font-size:9.5px;
+  letter-spacing:1.5px;
+  color:var(--mute-2);
+  text-transform:uppercase;
+  margin-top:4px;
 }
+.cd-sep{ color:var(--mute-2); font-family:var(--mono); font-size:20px; font-weight:700; }
+.cd-caption{
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--mute);
+  letter-spacing:0.5px;
+  margin-left:6px;
+}
+
 @media (max-width:700px){
-  .hero-stats-float{ position:static; margin:16px 24px 0; max-width:none; }
+  .hero-title-cyber{ font-size:clamp(34px, 12vw, 56px); }
+  .hero-countdown{ gap:8px; padding:16px 20px 32px; }
+  .cd-unit{ min-width:52px; padding:8px 10px; }
+  .cd-num{ font-size:19px; }
+  .cd-caption{ display:none; }
 }
 
 /* ---------- 3D TILT CARDS (target/ticket/kit cards) ---------- */

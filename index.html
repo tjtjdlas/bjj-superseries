@@ -38,22 +38,45 @@
   </div>
 </nav>
 
-<!-- HERO -->
-<header class="hero">
-  <div class="hero-media">
-    <img class="hero-banner-img" src="assets/img/hero-top-bar.jpg" width="2560" height="640" alt="BJJ SUPERSERIES — 초심자부터 국가대표급 엘리트 선수까지 한자리에 모여 기량을 겨루고 소통하는 주짓수 통합 커뮤니티의 장을 개최합니다.">
+<!-- HERO: Cyber-Athletic "The Dawn of Combat" -->
+<header class="hero-cyber">
+  <div class="hero-bg">
+    <!--
+      배경 영상/이미지 자리 (아래 규격에 맞는 파일을 받으면 여기에 <video>/<img>로 교체):
+      <video class="hero-bg-video" autoplay muted loop playsinline poster="assets/img/hero-bg-poster.jpg">
+        <source src="assets/img/hero-bg.webm" type="video/webm">
+        <source src="assets/img/hero-bg.mp4" type="video/mp4">
+      </video>
+    -->
+    <div class="hero-bg-gradient"></div>
+    <div class="hero-bg-grid"></div>
+    <div class="hero-scanlines"></div>
+    <div class="hero-vignette"></div>
+  </div>
 
-    <div class="hero-stats-float">
-      <div><b>일시</b><span>2026. 10. 18 (SUN)</span></div>
-      <div><b>장소</b><span>명지전문대학교 예체능관 3층</span></div>
+  <div class="hero-content-cyber">
+    <span class="hero-eyebrow-cyber">2026.10.18 SUN · 명지전문대학교 예체능관 3층</span>
+    <h1 class="hero-title-cyber glitch" data-text="SPYDER BJJ SUPER SERIES 2026 PART 2">
+      <span>SPYDER <span class="line-accent">BJJ</span></span>
+      <span>SUPER SERIES</span>
+      <span class="line-sub">2026 PART 2</span>
+    </h1>
+    <p class="hero-desc-cyber">초심자부터 국가대표급 엘리트까지 — 한계를 넘어선 진화, 대한민국 대표 주짓수 축제가 다시 펼쳐집니다.</p>
+    <div class="hero-actions">
+      <a href="tickets.html" class="btn btn-primary btn-lg btn-neon">티켓 예매하기</a>
+      <a href="bracket.html" class="btn btn-outline btn-lg">참가 선수명단 보기</a>
     </div>
   </div>
 
-  <div class="hero-content">
-    <div class="hero-actions">
-      <a href="tickets.html" class="btn btn-primary btn-lg">티켓 예매하기</a>
-      <a href="bracket.html" class="btn btn-outline btn-lg">참가 선수명단 보기</a>
-    </div>
+  <div class="hero-countdown" id="heroCountdown" data-target="2026-10-18T09:00:00+09:00">
+    <div class="cd-unit"><span class="cd-num" id="cdDays">00</span><span class="cd-label">Days</span></div>
+    <span class="cd-sep">:</span>
+    <div class="cd-unit"><span class="cd-num" id="cdHours">00</span><span class="cd-label">Hrs</span></div>
+    <span class="cd-sep">:</span>
+    <div class="cd-unit"><span class="cd-num" id="cdMins">00</span><span class="cd-label">Min</span></div>
+    <span class="cd-sep">:</span>
+    <div class="cd-unit"><span class="cd-num" id="cdSecs">00</span><span class="cd-label">Sec</span></div>
+    <span class="cd-caption">대회 개회식까지 남은 시간</span>
   </div>
 </header>
 
