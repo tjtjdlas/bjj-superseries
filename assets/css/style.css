@@ -400,8 +400,11 @@ p{ margin:0; }
   color:var(--mute);
   font-size:15.5px;
   line-height:1.8;
-  max-width:520px;
+  white-space:nowrap;
   margin-bottom:36px;
+}
+@media (max-width:900px){
+  .hero-desc-cyber{ white-space:normal; }
 }
 .hero-actions{
   margin-top:0;
