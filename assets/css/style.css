@@ -312,8 +312,8 @@ p{ margin:0; }
 .hero-bg-gradient{
   position:absolute; inset:0;
   background:
-    radial-gradient(45% 60% at 82% 30%, rgba(230,0,18,0.10), transparent 65%),
-    linear-gradient(100deg, rgba(5,6,7,0.72) 0%, rgba(5,6,7,0.25) 42%, rgba(5,6,7,0.08) 65%, rgba(5,6,7,0.35) 100%);
+    radial-gradient(45% 60% at 82% 30%, rgba(230,0,18,0.08), transparent 65%),
+    linear-gradient(180deg, rgba(5,6,7,0.05) 0%, rgba(5,6,7,0.02) 55%, rgba(5,6,7,0.35) 100%);
 }
 .hero-bg-grid{
   position:absolute; inset:-1px;
@@ -336,7 +336,7 @@ p{ margin:0; }
 }
 .hero-vignette{
   position:absolute; inset:0;
-  background:radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(5,6,7,0.55) 85%, rgba(5,6,7,0.92) 100%);
+  background:radial-gradient(120% 90% at 50% 50%, transparent 60%, rgba(5,6,7,0.25) 90%, rgba(5,6,7,0.5) 100%);
 }
 
 /* -- foreground content -- */
