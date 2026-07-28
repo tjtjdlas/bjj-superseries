@@ -363,11 +363,11 @@ p{ margin:0; }
   letter-spacing:-1px;
   line-height:0.98;
   color:var(--white);
-  font-size:clamp(40px, 8vw, 108px);
+  font-size:clamp(32px, 6.4vw, 86px);
   margin:0 0 28px;
 }
 .hero-title-cyber span{ display:block; }
-.hero-title-cyber .line-accent{ color:var(--red); }
+.hero-title-cyber .line-accent{ color:var(--white); }
 .hero-title-cyber .line-sub{
   font-size:0.42em;
   letter-spacing:2px;
@@ -452,7 +452,7 @@ p{ margin:0; }
 }
 
 @media (max-width:700px){
-  .hero-title-cyber{ font-size:clamp(34px, 12vw, 56px); }
+  .hero-title-cyber{ font-size:clamp(27px, 9.6vw, 45px); }
   .hero-countdown{ gap:8px; padding:16px 20px 32px; }
   .cd-unit{ min-width:52px; padding:8px 10px; }
   .cd-num{ font-size:19px; }
