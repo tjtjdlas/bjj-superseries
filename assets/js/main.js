@@ -26,15 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(tick, 1000);
   }
 
-  // Cyber hero: periodic glitch burst on the title
-  const glitchTitle = document.querySelector('.hero-title-cyber.glitch');
-  if (glitchTitle && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    setInterval(() => {
-      glitchTitle.classList.add('glitching');
-      setTimeout(() => glitchTitle.classList.remove('glitching'), 350);
-    }, 4200);
-  }
-
   // Venue map (Leaflet + CARTO dark tiles — pre-styled minimal basemap, no invert hack needed)
   const mapEl = document.querySelector('#venueMap');
   if (mapEl && window.L) {

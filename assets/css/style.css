@@ -340,35 +340,6 @@ p{ margin:0; }
   margin:0 auto;
   padding:60px 24px 40px;
 }
-.hero-eyebrow-cyber{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  font-family:var(--mono);
-  font-size:12.5px;
-  font-weight:500;
-  letter-spacing:2px;
-  color:var(--neon);
-  text-transform:uppercase;
-  margin-bottom:22px;
-  padding:8px 16px;
-  border:1px solid rgba(255,26,48,0.4);
-  border-radius:var(--r-pill);
-  background:rgba(230,0,18,0.08);
-}
-.hero-eyebrow-cyber::before{
-  content:'';
-  width:7px; height:7px;
-  border-radius:50%;
-  background:var(--neon);
-  box-shadow:0 0 8px 2px rgba(255,26,48,0.8);
-  animation:pulseDot 1.6s ease-in-out infinite;
-}
-@keyframes pulseDot{
-  0%,100%{ opacity:1; transform:scale(1); }
-  50%{ opacity:0.4; transform:scale(0.7); }
-}
-
 .hero-title-cyber{
   font-family:var(--font-display);
   font-weight:900;
@@ -387,36 +358,6 @@ p{ margin:0; }
   color:var(--mute);
   font-weight:700;
   margin-top:10px;
-}
-
-/* glitch effect: chromatic-aberration duplicate layers, bursts on a timer via .glitching class */
-.glitch{ position:relative; }
-.glitch::before, .glitch::after{
-  content:attr(data-text);
-  position:absolute;
-  inset:0;
-  opacity:0;
-  overflow:hidden;
-  white-space:pre;
-}
-.glitch.glitching::before{
-  opacity:0.8;
-  color:var(--neon);
-  transform:translate(-3px,-1px);
-  clip-path:inset(10% 0 60% 0);
-  animation:glitchShift .35s steps(2,end) 1;
-}
-.glitch.glitching::after{
-  opacity:0.8;
-  color:#4ad9ff;
-  transform:translate(3px,1px);
-  clip-path:inset(55% 0 15% 0);
-  animation:glitchShift .35s steps(2,end) 1 reverse;
-}
-@keyframes glitchShift{
-  0%{ clip-path:inset(10% 0 60% 0); }
-  50%{ clip-path:inset(40% 0 30% 0); }
-  100%{ clip-path:inset(10% 0 60% 0); }
 }
 
 .hero-desc-cyber{
