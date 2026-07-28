@@ -1,4 +1,4 @@
--- 임시 테스트용 선수 10명 등록 (디자인 검토용)
+-- 임시 테스트용 선수 20명 등록 (디자인 검토용)
 -- Supabase 대시보드 > SQL Editor > New query 에 붙여넣고 Run 하세요.
 -- 나중에 실제 명단으로 교체하려면 admin.html에서 편집 후 "지금 사이트에 반영하기"를 누르면
 -- 이 데이터는 덮어써집니다.
@@ -14,6 +14,16 @@ set data = jsonb_set(data, '{athletes}', '[
   {"name":"윤서아","team":"메가바트","weight":"-64kg","age":"청소년","gender":"여"},
   {"name":"임준서","team":"팀매드","weight":"-82kg","age":"성인","gender":"남"},
   {"name":"한소율","team":"디딤주짓수","weight":"-70kg","age":"성인","gender":"여"},
-  {"name":"오민재","team":"레인메이커","weight":"무제한","age":"마스터","gender":"남"}
+  {"name":"오민재","team":"레인메이커","weight":"무제한","age":"마스터","gender":"남"},
+  {"name":"서지호","team":"스파이더","weight":"-76kg","age":"성인","gender":"남"},
+  {"name":"배수아","team":"트리니티 주짓수","weight":"-58kg","age":"성인","gender":"여"},
+  {"name":"홍성민","team":"OPMT 잠실","weight":"-85kg","age":"성인","gender":"남"},
+  {"name":"장하람","team":"클럽비투비","weight":"-62kg","age":"청소년","gender":"여"},
+  {"name":"신동혁","team":"팀매드","weight":"-100kg","age":"마스터","gender":"남"},
+  {"name":"조은우","team":"와이어 주짓수","weight":"-73kg","age":"성인","gender":"남"},
+  {"name":"문예진","team":"그레이스바르셀로나 강남","weight":"-56kg","age":"성인","gender":"여"},
+  {"name":"권시우","team":"디딤주짓수","weight":"-90kg","age":"성인","gender":"남"},
+  {"name":"백나윤","team":"메가바트","weight":"-66kg","age":"성인","gender":"여"},
+  {"name":"노태민","team":"레인메이커","weight":"무제한","age":"성인","gender":"남"}
 ]'::jsonb)
 where id = 1;
