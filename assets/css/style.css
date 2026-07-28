@@ -1305,7 +1305,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 .roster-table thead th:last-child{ border-top-right-radius:var(--r-md); border-bottom-right-radius:var(--r-md); }
 .roster-table td{
   color:var(--white);
-  background:linear-gradient(120deg, rgba(124,58,237,0.28), rgba(88,28,135,0.16));
+  background:linear-gradient(120deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   border-top:1px solid rgba(255,255,255,0.08);
@@ -1320,7 +1320,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   padding:14px 16px;
 }
 .roster-table td.rank-cell{
-  background:linear-gradient(160deg, rgba(147,112,246,0.65), rgba(76,29,149,0.45));
+  background:linear-gradient(160deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06));
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   color:#fff;
@@ -1329,7 +1329,7 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   line-height:1;
   font-variant-numeric:tabular-nums;
   border-right:1px solid rgba(255,255,255,0.18) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 8px 18px -8px rgba(124,58,237,0.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 8px 18px -8px rgba(0,0,0,0.5);
   position:relative;
 }
 .belt-dot{
