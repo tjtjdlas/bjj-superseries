@@ -2,6 +2,39 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Cyber hero: countdown timer to the event date
+  const countdownEl = document.querySelector('#heroCountdown');
+  if (countdownEl) {
+    const target = new Date(countdownEl.dataset.target).getTime();
+    const daysEl = document.querySelector('#cdDays');
+    const hoursEl = document.querySelector('#cdHours');
+    const minsEl = document.querySelector('#cdMins');
+    const secsEl = document.querySelector('#cdSecs');
+    const pad = (n) => String(Math.max(n, 0)).padStart(2, '0');
+    const tick = () => {
+      const diff = target - Date.now();
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      daysEl.textContent = pad(days);
+      hoursEl.textContent = pad(hours);
+      minsEl.textContent = pad(mins);
+      secsEl.textContent = pad(secs);
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // Cyber hero: periodic glitch burst on the title
+  const glitchTitle = document.querySelector('.hero-title-cyber.glitch');
+  if (glitchTitle && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setInterval(() => {
+      glitchTitle.classList.add('glitching');
+      setTimeout(() => glitchTitle.classList.remove('glitching'), 350);
+    }, 4200);
+  }
+
   // Venue map (Leaflet + CARTO dark tiles — pre-styled minimal basemap, no invert hack needed)
   const mapEl = document.querySelector('#venueMap');
   if (mapEl && window.L) {
