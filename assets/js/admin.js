@@ -17,6 +17,8 @@
   const pasteHint = document.querySelector('#pasteHint');
   const pasteArea = document.querySelector('#pasteArea');
   const parseBtn = document.querySelector('#parseBtn');
+  const fileInput = document.querySelector('#fileInput');
+  const fileNameLabel = document.querySelector('#fileNameLabel');
   const editTable = document.querySelector('#editTable');
   const addRowBtn = document.querySelector('#addRowBtn');
   const rosterTotal = document.querySelector('#rosterTotal');
@@ -74,26 +76,67 @@
     pasteHint.textContent = '열 순서: ' + cols.join(' | ');
   }
 
+  // rowsOfCells: array of rows, each row an array of cell strings (이름, 소속, ...분류항목순)
+  function addAthletesFromRows(rowsOfCells) {
+    let added = 0;
+    rowsOfCells.forEach(cols => {
+      const name = String(cols[0] || '').trim();
+      if (!name) return;
+      const athlete = { name, team: String(cols[1] || '').trim() };
+      state.categories.forEach((cat, i) => {
+        athlete[cat.key] = String(cols[2 + i] || '').trim();
+      });
+      state.athletes.push(athlete);
+      added++;
+    });
+    return added;
+  }
+
+  function isHeaderRow(cols) {
+    const first = String(cols[0] || '').trim();
+    return first === '이름' || first === 'NO' || first === 'No' || first === 'no';
+  }
+
   parseBtn.addEventListener('click', () => {
     const text = pasteArea.value;
     if (!text.trim()) return;
-    const rows = text.split(/\r?\n/).map(r => r.trim()).filter(Boolean);
-    let added = 0;
-    rows.forEach(row => {
-      const cols = row.split('\t');
-      const athlete = { name: (cols[0] || '').trim(), team: (cols[1] || '').trim() };
-      state.categories.forEach((cat, i) => {
-        athlete[cat.key] = (cols[2 + i] || '').trim();
-      });
-      if (athlete.name) {
-        state.athletes.push(athlete);
-        added++;
-      }
-    });
+    const rows = text.split(/\r?\n/).map(r => r.trim()).filter(Boolean).map(row => row.split('\t'));
+    const added = addAthletesFromRows(rows);
     pasteArea.value = '';
     renderEditTable();
     alert(`${added}명의 선수를 추가했습니다. 반영 버튼을 눌러야 실제 사이트에 저장됩니다.`);
   });
+
+  // ---------- Excel file attach (.xlsx/.xls/.csv) ----------
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      fileNameLabel.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+          rows = rows
+            .map(row => row.map(cell => String(cell == null ? '' : cell).trim()))
+            .filter(row => row.some(cell => cell !== ''));
+          if (rows.length && isHeaderRow(rows[0])) rows = rows.slice(1);
+
+          const added = addAthletesFromRows(rows);
+          renderEditTable();
+          alert(`엑셀 파일에서 ${added}명의 선수를 추가했습니다. 반영 버튼을 눌러야 실제 사이트에 저장됩니다.`);
+        } catch (err) {
+          alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+        } finally {
+          fileInput.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
 
   // ---------- Editable roster table ----------
   function renderEditTable() {

@@ -111,9 +111,14 @@
   </div>
 
   <div class="admin-block">
-    <h2>[ 02 ] 엑셀 붙여넣기로 등록</h2>
-    <p class="desc">엑셀에서 아래 순서의 열을 선택해 복사(Ctrl+C)한 뒤, 텍스트 상자에 붙여넣으세요(Ctrl+V). 헤더(제목) 행은 제외하고 데이터만 복사해 주세요.</p>
+    <h2>[ 02 ] 엑셀로 등록</h2>
+    <p class="desc">엑셀 파일(.xlsx/.csv)을 첨부하거나, 아래 순서의 열을 복사(Ctrl+C)해 텍스트 상자에 붙여넣으세요(Ctrl+V). 헤더(제목) 행은 자동으로 인식해 건너뜁니다.</p>
     <div class="paste-hint" id="pasteHint"></div>
+    <div class="admin-actions" style="margin-top:0; margin-bottom:14px;">
+      <label class="btn btn-outline" for="fileInput" style="cursor:pointer;">엑셀 파일 첨부</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+      <span class="desc" id="fileNameLabel" style="margin:0;"></span>
+    </div>
     <textarea id="pasteArea" placeholder="여기에 엑셀 데이터를 붙여넣으세요"></textarea>
     <div class="admin-actions">
       <button class="btn btn-primary" id="parseBtn" type="button">붙여넣은 데이터 추가하기</button>
@@ -150,6 +155,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="assets/js/supabase-config.js"></script>
 <script>
 (function(){
@@ -191,6 +197,6 @@
   });
 })();
 </script>
-<script src="assets/js/admin.js?v=5"></script>
+<script src="assets/js/admin.js?v=6"></script>
 </body>
 </html>
