@@ -1282,10 +1282,9 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 .empty-state h4{ color:var(--white); font-size:17px; margin-bottom:12px; font-family:var(--font); font-weight:700; letter-spacing:0; }
 .empty-state p{ font-size:14px; max-width:420px; margin:0 auto; }
 
-.roster-table{ width:100%; border-collapse:collapse; }
+.roster-table{ width:100%; border-collapse:separate; border-spacing:0 12px; }
 .roster-table th, .roster-table td{
-  padding:14px 18px;
-  border-bottom:1px solid var(--line);
+  padding:16px 18px;
   font-size:14px;
   text-align:left;
 }
@@ -1299,13 +1298,21 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   letter-spacing:0.5px;
   text-transform:uppercase;
   font-weight:800;
-  border-bottom:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 24px -10px rgba(0,0,0,0.55);
   position:relative;
 }
-.roster-table td{ color:var(--mute); }
-.roster-table tbody tr:nth-child(odd){ background:rgba(255,255,255,0.035); }
-.roster-table tbody tr:nth-child(even){ background:transparent; }
+.roster-table thead th:first-child{ border-top-left-radius:var(--r-md); border-bottom-left-radius:var(--r-md); }
+.roster-table thead th:last-child{ border-top-right-radius:var(--r-md); border-bottom-right-radius:var(--r-md); }
+.roster-table td{
+  color:var(--white);
+  background:linear-gradient(120deg, rgba(124,58,237,0.28), rgba(88,28,135,0.16));
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(255,255,255,0.08);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.roster-table td:first-child{ border-top-left-radius:var(--r-lg); border-bottom-left-radius:var(--r-lg); border-left:1px solid rgba(255,255,255,0.08); }
+.roster-table td:last-child{ border-top-right-radius:var(--r-lg); border-bottom-right-radius:var(--r-lg); border-right:1px solid rgba(255,255,255,0.08); }
 .roster-table th.rank-col, .roster-table td.rank-cell{
   width:1%;
   white-space:nowrap;
@@ -1313,15 +1320,16 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   padding:14px 16px;
 }
 .roster-table td.rank-cell{
-  background:linear-gradient(160deg, rgba(216,30,5,0.55), rgba(90,10,2,0.35));
+  background:linear-gradient(160deg, rgba(147,112,246,0.65), rgba(76,29,149,0.45));
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   color:#fff;
   font-family:var(--mono);
   font-weight:700;
+  line-height:1;
   font-variant-numeric:tabular-nums;
-  border-right:1px solid rgba(255,255,255,0.15);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -10px 18px -10px rgba(0,0,0,0.55), 0 8px 18px -8px rgba(216,30,5,0.55);
+  border-right:1px solid rgba(255,255,255,0.18) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 8px 18px -8px rgba(124,58,237,0.55);
   position:relative;
 }
 .belt-dot{
