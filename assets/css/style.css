@@ -796,7 +796,7 @@ section.section.in::before,
 /* ---------- BRAND STORY (full-bleed photo, text right) ---------- */
 .story-full{
   position:relative;
-  min-height:max(560px, 29.2vw);
+  min-height:29.2vw;
   display:flex;
   align-items:center;
   overflow:hidden;
