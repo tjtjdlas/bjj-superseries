@@ -353,7 +353,6 @@ p{ margin:0; }
 .hero-content-cyber{
   flex:1;
   min-width:0;
-  max-width:520px;
 }
 .sr-only{
   position:absolute;
@@ -391,11 +390,11 @@ p{ margin:0; }
 .hero-scdream-label{
   font-family:'SCDream', sans-serif;
   font-weight:900;
-  font-size:clamp(30px, 5vw, 56px);
-  line-height:1.1;
-  letter-spacing:-0.5px;
+  font-size:clamp(44px, 9vw, 116px);
+  line-height:0.98;
+  letter-spacing:-1.5px;
   color:var(--white);
-  margin:0 0 20px;
+  margin:0 0 28px;
 }
 .hero-desc-cyber{
   color:var(--mute);
