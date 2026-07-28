@@ -254,26 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Countdown to event date
-  const countdownEl = document.querySelector('#countdown');
-  if (countdownEl) {
-    const eventDate = new Date('2026-10-18T10:00:00+09:00').getTime();
-    const render = () => {
-      const now = Date.now();
-      const diff = eventDate - now;
-      if (diff <= 0) {
-        countdownEl.textContent = 'EVENT DAY';
-        return;
-      }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      countdownEl.textContent = `D-${d} ${h}h ${m}m`;
-    };
-    render();
-    setInterval(render, 60000);
-  }
-
   // Nav background solidify on scroll
   const nav = document.querySelector('.nav');
   if (nav) {
