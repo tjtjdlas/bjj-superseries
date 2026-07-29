@@ -833,6 +833,8 @@ section.section.in::before,
 .story-full-copy{
   max-width:680px;
   margin-left:auto;
+  margin-right:-32px;
+  margin-bottom:36px;
 }
 .story-full-copy p{
   color:var(--mute);
@@ -842,7 +844,7 @@ section.section.in::before,
 @media (max-width:900px){
   .story-full{ min-height:auto; padding:70px 0; }
   .story-full-scrim{ background:linear-gradient(180deg, rgba(6,6,6,0.25) 0%, rgba(6,6,6,0.85) 55%, rgba(6,6,6,0.97) 100%); }
-  .story-full-copy{ max-width:100%; margin-left:0; }
+  .story-full-copy{ max-width:100%; margin-left:0; margin-right:0; margin-bottom:0; }
 }
 
 /* ---------- EVENT MATCH BANNER ---------- */
