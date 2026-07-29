@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="footer-col">
           <h5>TICKET & CONTACT</h5>
           <a href="tickets.html">티켓 예매 안내</a>
-          <span>문의: 대행사 확인 필요 (TBD)</span>
           <span>주최: SPYDER</span>
         </div>
       </div>
