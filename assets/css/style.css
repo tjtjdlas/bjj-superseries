@@ -647,6 +647,10 @@ section.section.in::before,
   font-size:15.5px;
   line-height:1.85;
 }
+.nowrap-line{ white-space:nowrap; }
+@media (max-width:900px){
+  .nowrap-line{ white-space:normal; }
+}
 .bg-alt{ background:var(--bg-1); }
 .divider{
   height:1px;
