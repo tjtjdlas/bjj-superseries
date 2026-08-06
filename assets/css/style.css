@@ -1383,6 +1383,32 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   font-size:14px;
   line-height:1.85;
 }
+.accordion-panel ul{
+  list-style:none;
+  margin:0;
+  padding:0 24px 20px;
+}
+.accordion-panel ul li{
+  position:relative;
+  padding-left:16px;
+  margin-bottom:10px;
+  color:var(--mute);
+  font-size:14px;
+  line-height:1.7;
+}
+.accordion-panel ul li:last-child{ margin-bottom:0; }
+.accordion-panel ul li::before{
+  content:'';
+  position:absolute;
+  left:0; top:9px;
+  width:5px; height:5px;
+  border-radius:50%;
+  background:var(--red);
+}
+.accordion-panel .timetable{
+  width:calc(100% - 48px);
+  margin:0 24px 20px;
+}
 
 /* ---------- TIMETABLE ---------- */
 .timetable{ width:100%; border-collapse:collapse; }
