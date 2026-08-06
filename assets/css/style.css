@@ -994,7 +994,7 @@ section.section.in::before,
 /* ---------- VENUE ---------- */
 .venue-grid{
   display:grid;
-  grid-template-columns:1.1fr 0.9fr;
+  grid-template-columns:0.7fr 1.3fr;
   gap:20px;
   align-items:stretch;
 }
@@ -1081,7 +1081,7 @@ section.section.in::before,
   border:2px solid #fff;
 }
 .venue-info{
-  padding:40px;
+  padding:36px;
   background:var(--card-bg), var(--bg-card);
   background-blend-mode:overlay;
   border:1px solid var(--card-border);
@@ -1097,7 +1097,8 @@ section.section.in::before,
   font-size:14px;
 }
 .venue-info ul li:last-child{ border-bottom:none; }
-.venue-info ul li b{ color:var(--mute-2); font-family:var(--font); font-size:12px; letter-spacing:1px; text-transform:uppercase; min-width:90px; font-weight:700; flex-shrink:0; }
+.venue-info ul li b{ color:var(--mute-2); font-family:var(--font); font-size:12px; letter-spacing:1px; text-transform:uppercase; min-width:60px; font-weight:700; flex-shrink:0; white-space:nowrap; }
+.venue-info ul li span{ flex:1; min-width:0; }
 @media (max-width:860px){ .venue-grid{ grid-template-columns:1fr; } }
 
 /* ---------- GALLERY ---------- */
