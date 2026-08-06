@@ -807,8 +807,8 @@ section.section.in::before,
 }
 
 /* ---------- PROMO DETAIL (single full-width detail image) ---------- */
-.promo-detail{ line-height:0; background:var(--bg-0); }
-.promo-detail img{ display:block; width:100%; height:auto; }
+.promo-detail{ padding:60px 0; background:var(--bg-0); }
+.promo-detail img{ display:block; width:100%; height:auto; border-radius:var(--r-lg); }
 
 /* ---------- BRAND STORY (full-bleed photo, text right; unused, kept for reference) ---------- */
 .story-full{
