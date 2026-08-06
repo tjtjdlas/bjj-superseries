@@ -806,7 +806,11 @@ section.section.in::before,
   .target-grid{ grid-template-columns:1fr; }
 }
 
-/* ---------- BRAND STORY (full-bleed photo, text right) ---------- */
+/* ---------- PROMO DETAIL (single full-width detail image) ---------- */
+.promo-detail{ line-height:0; background:var(--bg-0); }
+.promo-detail img{ display:block; width:100%; height:auto; }
+
+/* ---------- BRAND STORY (full-bleed photo, text right; unused, kept for reference) ---------- */
 .story-full{
   position:relative;
   min-height:29.2vw;
