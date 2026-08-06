@@ -2,6 +2,13 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Device-specific landing links (e.g. ticket purchase buttons with separate PC/mobile URLs)
+  const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  document.querySelectorAll('[data-pc-href]').forEach(a => {
+    const target = isMobileDevice ? a.dataset.moHref : a.dataset.pcHref;
+    if (target) a.href = target;
+  });
+
   // Cyber hero: countdown timer to the event date
   const countdownEl = document.querySelector('#heroCountdown');
   if (countdownEl) {
