@@ -1319,6 +1319,19 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 .ticket-price span{ font-size:14px; color:var(--mute); font-family:var(--font); font-weight:400; }
 .ticket-note{ font-family:var(--font); font-size:11.5px; color:var(--mute-2); margin-bottom:30px; }
 .ticket-features{ flex:1; margin-bottom:30px; }
+.ticket-card-disabled:hover{ transform:none; border-color:var(--card-border); }
+.ticket-card-disabled .ticket-name,
+.ticket-card-disabled .ticket-price,
+.ticket-card-disabled .ticket-features{ opacity:0.4; }
+.ticket-card-disabled .ticket-price{ margin-top:16px; }
+.ticket-btn-locked{
+  background:var(--mute-2);
+  border:1px solid var(--mute-2);
+  color:var(--bg-0);
+  cursor:not-allowed;
+  pointer-events:none;
+  opacity:1;
+}
 .ticket-features li{
   display:flex;
   align-items:flex-start;
