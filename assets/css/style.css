@@ -1424,14 +1424,13 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
 }
 .timetable th{
   color:var(--mute-2);
-  font-family:var(--mono);
-  font-size:11px;
-  letter-spacing:1.5px;
-  font-weight:500;
-  text-transform:uppercase;
+  font-family:'SCDream', sans-serif;
+  font-size:11.5px;
+  letter-spacing:0.3px;
+  font-weight:700;
 }
 .timetable td{ color:var(--mute); }
-.timetable td.time{ color:var(--white); font-weight:700; white-space:nowrap; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.timetable td.time{ color:var(--white); font-weight:700; white-space:nowrap; font-family:'SCDream', sans-serif; font-variant-numeric:tabular-nums; }
 .table-scroll{ overflow-x:auto; border:1px solid var(--card-border); border-radius:var(--r-lg); background:var(--card-bg), var(--bg-1); background-blend-mode:overlay; }
 .table-scroll .timetable{ min-width:560px; }
 .table-scroll th:first-child, .table-scroll td:first-child{ padding-left:24px; }
