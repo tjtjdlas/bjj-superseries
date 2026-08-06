@@ -1212,6 +1212,13 @@ footer p{ color:var(--mute-2); font-size:13.5px; line-height:1.8; max-width:360p
   padding:6px 0;
 }
 .footer-col a:hover{ color:var(--white); }
+.footer-notice{
+  text-align:center;
+  color:var(--mute-2);
+  font-size:12px;
+  line-height:1.7;
+  margin:0 0 24px;
+}
 .footer-bottom{
   border-top:1px solid var(--line);
   padding-top:24px;

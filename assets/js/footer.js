@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span>주최: SPYDER</span>
         </div>
       </div>
+      <p class="footer-notice">본 대회 안내 사이트는 PC 환경에 최적화되어 있습니다.<br>원활한 정보 확인을 위해 PC 또는 노트북을 통한 접속을 권장합니다.</p>
       <div class="footer-bottom">
         <span>&copy; 2026 SPYDER BJJ SUPER SERIES. All rights reserved.</span>
       </div>
