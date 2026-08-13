@@ -5,7 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterRow = document.querySelector('#categoryFilters');
   const searchInput = document.querySelector('#rosterSearch');
   const countEl = document.querySelector('#rosterCount');
+  const updatedEl = document.querySelector('#rosterUpdated');
   if (!tableBody || !tableHead) return;
+
+  function showUpdatedAt(iso) {
+    if (!updatedEl || !iso) return;
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    updatedEl.textContent = `마지막 업데이트: ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
 
   const SUPABASE_URL = window.SPYDER_SUPABASE_URL;
   const SUPABASE_ANON_KEY = window.SPYDER_SUPABASE_ANON_KEY;
@@ -32,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadRoster() {
     const { data, error } = await sb
       .from('roster_state')
-      .select('data')
+      .select('data, updated_at')
       .eq('id', 1)
       .single();
 
@@ -41,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     applyState(data.data);
+    showUpdatedAt(data.updated_at);
   }
 
   loadRoster();
@@ -49,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sb.channel('roster_state_public')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'roster_state', filter: 'id=eq.1' }, (payload) => {
       applyState(payload.new.data);
+      showUpdatedAt(payload.new.updated_at);
     })
     .subscribe();
 
