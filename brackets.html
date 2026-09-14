@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대진표 | SPYDER BJJ SUPER SERIES 2026 PART 2</title>
+<meta name="description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 대진표. 연령·성별·등급·체급 필터와 선수 이름 검색으로 내 대진과 예상 경기 시간을 확인하세요.">
+<link rel="icon" type="image/png" href="assets/img/spyder-bug.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="대진표 | SPYDER BJJ SUPER SERIES 2026 PART 2">
+<meta property="og:description" content="연령·성별·등급·체급 필터와 선수 이름 검색으로 내 대진과 예상 경기 시간을 확인하세요.">
+<meta property="og:image" content="assets/img/poster-main.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/style.css?v=79">
+<link rel="stylesheet" href="assets/css/bracket.css?v=1">
+</head>
+<body>
+
+<div class="web-texture"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="assets/img/spyder-bug.png" class="spider-icon" alt="">
+      <img src="assets/img/spyder-wordmark.png" class="wordmark" alt="SPYDER">
+      <img src="assets/img/bjj-superseries-logo-white.png" class="bjj-logo" alt="BJJ SUPERSERIES">
+    </a>
+    <div class="nav-links">
+      <a href="index.html#overview">대회 개요</a>
+      <a href="index.html#venue">장소·일정</a>
+      <a href="index.html#gallery">갤러리</a>
+      <a href="rules.html">규정·유의사항</a>
+      <a href="bracket.html">참가 선수 명단</a>
+      <a href="brackets.html" class="active">대진표</a>
+      <a href="tickets.html" class="nav-cta">참가 신청하기</a>
+    </div>
+    <button class="nav-toggle" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<section class="section bg-alt">
+  <div class="container">
+    <div class="section-head section-head-center section-head-band bkt-print-hide">
+      <h2 class="section-title display reveal-text" style="font-size:clamp(26px,4vw,36px);">대진표</h2>
+      <p class="section-desc reveal" style="transition-delay:.15s;">연령·성별·등급·체급 필터와 이름 검색으로 내 대진만 골라 볼 수 있습니다. 각 경기 카드에 경기번호·매트·예상 경기 시간이 표시됩니다.</p>
+    </div>
+
+    <!-- 필터 & 검색 -->
+    <div class="bkt-toolbar bkt-print-hide">
+      <div class="container" style="padding:0;">
+        <div class="bkt-search-wrap">
+          <input type="text" id="bracketSearch" placeholder="선수 이름 또는 소속팀 검색 (초성 검색 가능)" disabled aria-label="선수 이름 또는 소속팀 검색">
+          <button type="button" class="bkt-btn is-on" id="bracketMineBtn" aria-pressed="true" title="검색어와 일치하는 부문만 표시">내 대진만 보기</button>
+          <button type="button" class="bkt-btn" id="bracketResetBtn">전체 초기화</button>
+          <button type="button" class="bkt-btn" id="bracketShareBtn">링크 복사</button>
+          <button type="button" class="bkt-btn" id="bracketPrintBtn">인쇄 / PDF</button>
+        </div>
+        <div class="filter-row" id="bracketFilters" style="margin-top:12px;"></div>
+        <div class="bkt-chips" id="bracketChips"></div>
+      </div>
+    </div>
+
+    <p class="bkt-count" id="bracketCount"></p>
+    <div id="bracketList"></div>
+    <p class="roster-updated" id="bracketUpdated"></p>
+    <p class="bkt-note bkt-print-hide">※ 예상 경기 시간은 진행 상황에 따라 변동될 수 있습니다. 반드시 현장 매트 안내와 장내 방송을 함께 확인해 주세요.</p>
+  </div>
+</section>
+
+<div class="divider bkt-print-hide"></div>
+
+<!-- CTA BAND -->
+<section class="cta-band bkt-print-hide">
+  <div class="container">
+    <h3 class="display">아직 참가 신청 전이신가요?</h3>
+    <p>티켓 예매 후 체급 배정을 통해 대진에 등록됩니다.</p>
+    <div class="hero-actions" style="justify-content:center;">
+      <a href="tickets.html" class="btn btn-outline btn-lg">참가 신청하기</a>
+    </div>
+  </div>
+</section>
+
+<p class="admin-tucked-link bkt-print-hide"><a href="admin-bracket.html">관리자</a></p>
+
+<footer id="footer-include"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/main.js?v=45"></script>
+<script src="assets/js/footer.js?v=40"></script>
+<script src="assets/js/bracket-core.js?v=1"></script>
+<script src="assets/js/bracket-render.js?v=1"></script>
+<script src="assets/js/brackets.js?v=1"></script>
+</body>
+</html>

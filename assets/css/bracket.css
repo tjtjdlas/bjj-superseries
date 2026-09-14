@@ -1,0 +1,371 @@
+/* ==================================================
+   SPYDER BJJ SUPER SERIES — 대진표(Bracket) 스타일
+   style.css 의 디자인 토큰(--red / --gold / --line …)을 그대로 사용합니다.
+   ================================================== */
+
+/* ---------- 필터 바 ---------- */
+.bkt-toolbar{
+  position:sticky;
+  top:var(--nav-h);
+  z-index:var(--z-sticky-header, 60);
+  background:rgba(5,6,8,0.92);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+  padding:18px 0 14px;
+  margin-bottom:36px;
+}
+.bkt-toolbar .search-row,
+.bkt-toolbar .filter-row{ margin-bottom:12px; }
+.bkt-toolbar .filter-row{ margin-bottom:0; }
+
+.bkt-search-wrap{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.bkt-search-wrap input{
+  flex:1; min-width:200px;
+  background:rgba(17,17,17,0.55);
+  border:1px solid var(--card-border);
+  border-radius:var(--r-pill);
+  color:var(--white);
+  padding:14px 22px;
+  font-family:var(--font);
+  font-size:13px;
+  line-height:1;
+}
+.bkt-search-wrap input:focus{ outline:none; border-color:var(--red); }
+.bkt-search-wrap input::placeholder{ color:var(--mute-2); }
+
+.bkt-btn{
+  background:none;
+  border:1px solid var(--outline-border, rgba(255,255,255,0.3));
+  border-radius:var(--r-pill);
+  color:var(--white);
+  font-family:var(--font);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  padding:12px 18px;
+  line-height:1;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.bkt-btn:hover{ background:var(--outline-hover-bg, rgba(255,255,255,0.06)); }
+.bkt-btn.is-on{ background:var(--red); border-color:var(--red); color:#fff; }
+.bkt-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+/* 활성 필터 칩 */
+.bkt-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.bkt-chip{
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(230,0,18,0.14);
+  border:1px solid rgba(230,0,18,0.45);
+  border-radius:var(--r-pill);
+  color:var(--white);
+  font-size:11.5px; font-weight:700; letter-spacing:0.4px;
+  padding:7px 12px 7px 14px;
+}
+.bkt-chip button{
+  background:none; border:none; color:var(--white); cursor:pointer;
+  font-size:14px; line-height:1; padding:0; opacity:0.7;
+}
+.bkt-chip button:hover{ opacity:1; }
+
+/* ---------- 부문 카드 ---------- */
+.bkt-division{
+  border:1px solid var(--card-border);
+  border-radius:var(--r-lg);
+  background:var(--card-bg), var(--bg-1);
+  background-blend-mode:overlay;
+  box-shadow:var(--card-shadow);
+  padding:28px;
+  margin-bottom:28px;
+  scroll-margin-top:calc(var(--nav-h) + 120px);
+}
+.bkt-division-head{
+  display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+  padding-bottom:18px; margin-bottom:22px;
+  border-bottom:1px solid var(--line);
+}
+.bkt-division-title{
+  font-family:var(--font); font-weight:800;
+  font-size:clamp(16px,2.4vw,20px);
+  color:var(--white); letter-spacing:-0.2px;
+  margin-right:auto;
+}
+.bkt-meta{ display:flex; flex-wrap:wrap; gap:7px; }
+.bkt-tag{
+  font-family:var(--mono);
+  font-size:10.5px; font-weight:500; letter-spacing:0.6px;
+  color:var(--mute);
+  border:1px solid var(--line);
+  border-radius:var(--r-pill);
+  padding:6px 11px; line-height:1;
+  white-space:nowrap;
+}
+.bkt-tag.is-accent{ color:var(--gold); border-color:rgba(217,178,94,0.45); }
+.bkt-tag.is-red{ color:#ff6b76; border-color:rgba(230,0,18,0.5); }
+
+/* 포디움 요약 */
+.bkt-podium{
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-bottom:22px;
+}
+.bkt-podium-item{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid var(--line);
+  border-radius:var(--r-md);
+  padding:11px 16px;
+  background:rgba(255,255,255,0.02);
+}
+.bkt-podium-rank{
+  font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:1px;
+  padding:4px 8px; border-radius:var(--r-pill); line-height:1;
+}
+.bkt-podium-item.is-1 .bkt-podium-rank{ background:var(--gold); color:#181206; }
+.bkt-podium-item.is-2 .bkt-podium-rank{ background:#b9bcc4; color:#16171b; }
+.bkt-podium-item.is-3 .bkt-podium-rank{ background:#a8703c; color:#fff; }
+.bkt-podium-name{ font-size:13.5px; font-weight:700; color:var(--white); }
+.bkt-podium-team{ font-size:11.5px; color:var(--mute); }
+
+/* 조 탭 */
+.bkt-pool-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.bkt-pool-tab{
+  background:none; border:1px solid var(--line); border-radius:var(--r-pill);
+  color:var(--mute); font-family:var(--font); font-weight:700;
+  font-size:11.5px; letter-spacing:0.6px; padding:9px 16px; line-height:1; cursor:pointer;
+}
+.bkt-pool-tab.is-on{ background:var(--white); border-color:var(--white); color:#0b0c10; }
+.bkt-pool-tab:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+/* ---------- 대진도 ---------- */
+.bkt-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:4px 2px 14px;
+  -webkit-overflow-scrolling:touch;
+}
+.bkt-rounds{
+  display:flex;
+  gap:28px;
+  min-width:min-content;
+  align-items:stretch;
+}
+.bkt-round{
+  display:flex;
+  flex-direction:column;
+  min-width:206px;
+  flex:1 0 206px;
+}
+.bkt-round-label{
+  font-family:var(--mono);
+  font-size:10.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
+  color:var(--mute-2);
+  text-align:center;
+  padding-bottom:12px;
+  margin-bottom:4px;
+  border-bottom:1px solid var(--line-2);
+}
+.bkt-round-body{ display:flex; flex-direction:column; flex:1; }
+.bkt-cell{
+  flex:1;
+  display:flex;
+  align-items:center;
+  position:relative;
+  min-height:86px;
+  padding:5px 0;
+}
+
+/* 연결선 */
+.bkt-round:not(:first-child) .bkt-cell::before{
+  content:'';
+  position:absolute;
+  left:-14px; top:25%;
+  width:1px; height:50%;
+  background:var(--line);
+}
+.bkt-round:not(:first-child) .bkt-cell::after{
+  content:'';
+  position:absolute;
+  left:-14px; top:50%;
+  width:14px; height:1px;
+  background:var(--line);
+}
+.bkt-round:not(:last-child) .bkt-match::after{
+  content:'';
+  position:absolute;
+  right:-14px; top:50%;
+  width:14px; height:1px;
+  background:var(--line);
+}
+/* 3위 결정전 등 단독 라운드는 연결선 없음 */
+.bkt-round.is-standalone .bkt-cell::before,
+.bkt-round.is-standalone .bkt-cell::after{ content:none; }
+
+/* ---------- 매치 카드 ---------- */
+.bkt-match{
+  position:relative;
+  width:100%;
+  border:1px solid var(--card-border);
+  border-radius:var(--r-md);
+  background:var(--bg-card);
+  overflow:hidden;
+  scroll-margin-top:calc(var(--nav-h) + 140px);
+  transition:border-color .25s ease, box-shadow .25s ease;
+}
+.bkt-match.is-bye{ opacity:0.55; }
+.bkt-match.is-hit{
+  border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red), 0 0 28px -6px rgba(230,0,18,0.75);
+}
+@keyframes bktFlash{
+  0%,100%{ box-shadow:0 0 0 1px var(--red), 0 0 28px -6px rgba(230,0,18,0.75); }
+  50%{ box-shadow:0 0 0 3px rgba(230,0,18,0.55), 0 0 40px -4px rgba(230,0,18,0.95); }
+}
+.bkt-match.is-flash{ animation:bktFlash 0.8s ease-in-out 3; }
+
+.bkt-match-head{
+  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+  padding:7px 11px;
+  background:rgba(255,255,255,0.035);
+  border-bottom:1px solid var(--line-2);
+  font-family:var(--mono);
+  font-size:10px; letter-spacing:0.4px;
+  color:var(--mute);
+}
+.bkt-no{ color:var(--white); font-weight:700; }
+.bkt-time{ color:var(--gold); font-weight:700; margin-left:auto; }
+.bkt-dur{ color:var(--mute-2); }
+.bkt-status{
+  font-family:var(--font); font-size:9.5px; font-weight:700; letter-spacing:0.5px;
+  padding:3px 7px; border-radius:var(--r-pill); line-height:1;
+  border:1px solid var(--line);
+  color:var(--mute);
+}
+.bkt-status.s-live{ color:#fff; background:var(--red); border-color:var(--red); }
+.bkt-status.s-done{ color:#0b0c10; background:var(--mute); border-color:var(--mute); }
+.bkt-status.s-bye{ color:var(--gold); border-color:rgba(217,178,94,0.4); }
+
+.bkt-slot{
+  display:flex; align-items:center; gap:9px;
+  padding:11px 12px;
+  border-bottom:1px solid var(--line-2);
+  min-height:44px;
+}
+.bkt-slot:last-child{ border-bottom:none; }
+.bkt-slot.is-winner{ background:rgba(230,0,18,0.09); }
+.bkt-slot.is-winner .bkt-name{ color:#fff; }
+.bkt-slot.is-winner::before{
+  content:'승';
+  font-family:var(--font); font-size:9px; font-weight:800; letter-spacing:0.5px;
+  background:var(--red); color:#fff;
+  border-radius:3px; padding:2px 4px; line-height:1;
+  flex-shrink:0;
+}
+.bkt-slot.is-loser{ opacity:0.5; }
+.bkt-slot.is-tbd .bkt-name,
+.bkt-slot.is-bye .bkt-name{ color:var(--mute-2); font-weight:500; font-style:normal; }
+
+.bkt-seed{
+  font-family:var(--mono); font-size:9.5px; font-weight:700;
+  color:#0b0c10; background:var(--gold);
+  border-radius:3px; padding:2px 4px; line-height:1; flex-shrink:0;
+}
+.bkt-name{
+  font-family:var(--font); font-size:13px; font-weight:700; color:var(--white);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.bkt-team{
+  font-size:10.5px; color:var(--mute);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width:88px;
+}
+.bkt-score{
+  margin-left:auto;
+  font-family:var(--mono); font-size:12.5px; font-weight:700; color:var(--white);
+  flex-shrink:0;
+}
+.bkt-slot mark{
+  background:rgba(217,178,94,0.35);
+  color:#fff;
+  border-radius:2px;
+  padding:0 2px;
+}
+
+/* 안내 / 빈 상태 */
+.bkt-empty{
+  border:1px dashed var(--line);
+  border-radius:var(--r-lg);
+  padding:56px 24px;
+  text-align:center;
+  color:var(--mute);
+  font-size:13.5px;
+  line-height:1.9;
+}
+.bkt-empty b{ color:var(--white); display:block; margin-bottom:8px; font-size:15px; }
+.bkt-note{ font-size:12px; color:var(--mute-2); margin-top:10px; letter-spacing:0.3px; }
+.bkt-count{ font-size:12px; color:var(--mute-2); letter-spacing:0.5px; margin-bottom:18px; }
+
+.bkt-skeleton{
+  border:1px solid var(--card-border);
+  border-radius:var(--r-lg);
+  height:190px;
+  margin-bottom:22px;
+  background:linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 37%, rgba(255,255,255,0.02) 63%);
+  background-size:400% 100%;
+  animation:bktShimmer 1.4s ease infinite;
+}
+@keyframes bktShimmer{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+.bkt-toast{
+  position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+  background:var(--white); color:#0b0c10;
+  font-family:var(--font); font-size:12.5px; font-weight:700;
+  padding:12px 22px; border-radius:var(--r-pill);
+  opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+  z-index:3000;
+}
+.bkt-toast.is-on{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ---------- 반응형 ---------- */
+@media (max-width:900px){
+  .bkt-division{ padding:20px 16px; }
+  .bkt-rounds{ gap:24px; }
+  .bkt-round{ min-width:188px; flex:0 0 188px; }
+}
+@media (max-width:640px){
+  .bkt-toolbar{ padding:14px 0 12px; }
+  .bkt-division-title{ font-size:15px; width:100%; }
+  .bkt-round{ min-width:176px; flex:0 0 176px; }
+  .bkt-name{ font-size:12.5px; }
+  .bkt-team{ max-width:70px; }
+  .bkt-cell{ min-height:80px; }
+  /* 좁은 화면에서 카드 헤더가 두 줄로 접히지 않도록 경기시간(분)은 숨김 */
+  .bkt-dur{ display:none; }
+  .bkt-match-head{ flex-wrap:nowrap; gap:6px; padding:7px 9px; }
+  .bkt-slot{ padding:10px; gap:7px; }
+}
+@media (max-width:360px){
+  .bkt-round{ min-width:164px; flex:0 0 164px; }
+  .bkt-division{ padding:16px 12px; }
+}
+
+/* ---------- 인쇄 (A4 가로) ---------- */
+@media print{
+  @page{ size:A4 landscape; margin:10mm; }
+  .nav, .bkt-toolbar, .cta-band, footer, .floating-ticket,
+  .web-texture, .admin-tucked-link, .bkt-toast, .bkt-print-hide{ display:none !important; }
+  body{ background:#fff !important; color:#111 !important; }
+  .section{ padding:0 !important; }
+  .bkt-division{
+    background:#fff !important; border:1px solid #bbb !important; box-shadow:none !important;
+    page-break-inside:avoid; break-inside:avoid; margin-bottom:14px; padding:14px;
+  }
+  .bkt-division-title, .bkt-name, .bkt-no, .bkt-score{ color:#111 !important; }
+  .bkt-tag, .bkt-team, .bkt-round-label, .bkt-dur{ color:#555 !important; }
+  .bkt-time{ color:#111 !important; }
+  .bkt-match{ background:#fff !important; border:1px solid #bbb !important; }
+  .bkt-match-head{ background:#f2f2f2 !important; }
+  .bkt-slot.is-winner{ background:#eee !important; }
+  .bkt-slot.is-winner::before{ background:#111 !important; }
+  .bkt-scroll{ overflow:visible !important; }
+  .bkt-rounds{ min-width:0 !important; }
+}

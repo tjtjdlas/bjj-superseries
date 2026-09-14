@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>대진표 관리자 | SPYDER BJJ SUPER SERIES</title>
+<link rel="stylesheet" href="assets/css/style.css?v=79">
+<link rel="stylesheet" href="assets/css/bracket.css?v=1">
+<style>
+  .admin-wrap{ max-width:1180px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 120px; }
+  .admin-bar{
+    position:fixed; top:0; left:0; right:0; z-index:var(--z-sticky-header); height:var(--nav-h);
+    display:flex; align-items:center; background:rgba(5,6,8,0.9);
+    border-bottom:1px solid var(--line);
+  }
+  .admin-bar .inner{ max-width:1180px; margin:0 auto; padding:0 24px; width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .admin-title{ font-family:var(--font); font-size:13px; letter-spacing:0; color:var(--white); }
+  .admin-title a{ color:var(--mute-2); }
+  .admin-block{
+    border:1px solid var(--card-border); border-radius:var(--r-lg); padding:32px; margin-bottom:32px;
+    background:var(--card-bg), var(--bg-card); background-blend-mode:overlay; box-shadow:var(--card-shadow);
+  }
+  .admin-block h2{ font-family:var(--font); font-weight:700; font-size:14px; letter-spacing:0; text-transform:uppercase; color:var(--white); margin-bottom:8px; }
+  .admin-block .desc{ color:var(--mute); font-size:13.5px; margin-bottom:22px; line-height:1.7; }
+  .admin-actions{ display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; align-items:center; }
+  .admin-note{ font-size:12.5px; color:var(--mute-2); margin-top:14px; line-height:1.8; }
+  .admin-note b{ color:var(--white); }
+  .admin-wrap .btn::after{ content:none; }
+
+  .field-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; }
+  .field{ display:flex; flex-direction:column; gap:7px; }
+  .field label{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.8px; text-transform:uppercase; color:var(--mute-2); }
+  .field input, .field select{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
+    padding:11px 16px; font-family:var(--font); font-size:13.5px; line-height:1; width:100%;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--red); }
+  .field .hint{ font-size:11px; color:var(--mute-2); line-height:1.5; }
+
+  .edit-table-wrap{ border:1px solid var(--card-border); border-radius:var(--r-lg); overflow:auto; background:var(--bg-card); max-height:640px; }
+  .edit-table{ width:100%; border-collapse:collapse; min-width:1080px; }
+  .edit-table th{
+    position:sticky; top:0; z-index:2; background:#15161c;
+    font-family:var(--font); font-weight:700; font-size:11px; letter-spacing:0.5px; text-transform:uppercase;
+    color:var(--mute-2); text-align:left; padding:11px 8px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .edit-table td{ padding:5px 6px; border-bottom:1px solid var(--line-2); vertical-align:middle; }
+  .edit-table tr:last-child td{ border-bottom:none; }
+  .edit-table tr.round-sep td{ background:rgba(255,255,255,0.03); }
+  .edit-table input, .edit-table select{
+    width:100%; background:transparent; border:1px solid transparent; border-radius:var(--r-sm); color:var(--white);
+    padding:7px 8px; font-family:var(--font); font-size:13px;
+  }
+  .edit-table select{ background:var(--bg-card); border-color:var(--line); }
+  .edit-table input:focus, .edit-table select:focus{ outline:none; border-color:var(--red); background:var(--bg-card); }
+  .edit-table .cell-no{ font-family:var(--mono); font-size:12px; color:var(--white); white-space:nowrap; }
+  .edit-table .cell-round{ font-size:11.5px; color:var(--mute); white-space:nowrap; }
+  .col-tight{ width:76px; }
+  .col-mid{ width:110px; }
+  .col-wide{ width:190px; }
+
+  .status-line{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:0.5px;
+    padding:9px 14px; border-radius:var(--r-pill); border:1px solid var(--line); color:var(--mute);
+    display:inline-block;
+  }
+  .status-line.is-dirty{ color:var(--gold); border-color:rgba(217,178,94,0.45); }
+  .status-line.is-ok{ color:#6ee7a8; border-color:rgba(110,231,168,0.4); }
+  .status-line.is-err{ color:#ff6b76; border-color:rgba(230,0,18,0.5); }
+
+  .div-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-top:10px; }
+  .div-card{
+    border:1px solid var(--line); border-radius:var(--r-md); padding:14px 16px; background:rgba(255,255,255,0.02);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .div-card b{ color:var(--white); font-size:13.5px; }
+  .div-card span{ font-size:11.5px; color:var(--mute); }
+  .div-card .warn{ color:#ff6b76; }
+
+  .history-list{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .history-row{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    border:1px solid var(--line); border-radius:var(--r-md); padding:10px 14px;
+    font-size:12.5px; color:var(--mute);
+  }
+  .history-row b{ color:var(--white); font-family:var(--mono); font-size:12px; }
+  .history-row button{
+    margin-left:auto; background:none; border:1px solid var(--line); border-radius:var(--r-pill);
+    color:var(--mute); padding:7px 14px; cursor:pointer; font-family:var(--font); font-size:11.5px;
+  }
+  .history-row button:hover{ border-color:var(--red); color:var(--red); }
+
+  #previewBox{ margin-top:20px; }
+  #previewBox .bkt-division{ background:var(--bg-1); }
+
+  #adminGate{ position:fixed; inset:0; z-index:2000; background:var(--bg-0); display:flex; align-items:center; justify-content:center; padding:24px; }
+  #adminGate form{ width:100%; max-width:320px; text-align:center; }
+  #adminGate .lock-label{ font-family:var(--font); font-size:13px; color:var(--mute); margin-bottom:18px; }
+  #adminGate input{
+    width:100%; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
+    padding:14px 16px; font-family:var(--font); font-size:14px; line-height:1; text-align:center; margin-bottom:14px;
+  }
+  #adminGate input:focus{ outline:none; border-color:var(--red); }
+  #adminGate .btn{ width:100%; }
+  #adminGateError{ display:none; color:var(--red); font-size:12.5px; margin-top:12px; }
+
+  @media (max-width:640px){
+    .admin-wrap{ padding:calc(var(--nav-h) + 30px) 16px 90px; }
+    .admin-block{ padding:22px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="adminGate">
+  <form id="adminGateForm">
+    <div class="lock-label">관리자 비밀번호를 입력하세요</div>
+    <input type="password" id="adminGatePw" autocomplete="off" placeholder="PASSWORD">
+    <button type="submit" class="btn btn-primary" id="adminGateSubmit">입장</button>
+    <div id="adminGateError">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+  </form>
+</div>
+
+<div id="adminContent" style="display:none;">
+
+<div class="admin-bar">
+  <div class="inner">
+    <span class="admin-title">SPYDER <span style="color:var(--mute-2);">/</span> 대진표 관리자</span>
+    <span class="admin-title">
+      <a href="admin.html">선수 명단 관리 →</a>
+      &nbsp;&nbsp;<a href="brackets.html">← 사이트로 돌아가기</a>
+    </span>
+  </div>
+</div>
+
+<div class="admin-wrap">
+
+  <div class="admin-block">
+    <h2>[ 01 ] 참가자 명단 연동</h2>
+    <p class="desc">
+      대진표는 <b style="color:var(--white)">선수 명단 관리자</b>에 등록된 참가자를 그대로 사용합니다(별도 입력 불필요).
+      명단의 분류 항목 중 어느 것이 연령부·성별·등급·체급인지 아래에서 지정하세요. 이 조합이 하나의 부문이 됩니다.
+    </p>
+    <div class="field-grid">
+      <div class="field">
+        <label>연령부</label>
+        <select data-map="age"></select>
+      </div>
+      <div class="field">
+        <label>성별</label>
+        <select data-map="gender"></select>
+      </div>
+      <div class="field">
+        <label>등급 / 벨트</label>
+        <select data-map="grade"></select>
+      </div>
+      <div class="field">
+        <label>체급</label>
+        <select data-map="weight"></select>
+      </div>
+    </div>
+    <div class="admin-actions">
+      <button class="btn btn-outline" id="reloadRosterBtn" type="button">명단 다시 불러오기</button>
+      <span class="status-line" id="rosterStatus">명단을 불러오는 중…</span>
+    </div>
+    <div class="div-list" id="divPreview"></div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 02 ] 대진 설정</h2>
+    <p class="desc">아래 값은 대진 자동 생성과 경기번호·예상 시간 계산에 사용됩니다. 생성 후에도 개별 경기에서 덮어쓸 수 있습니다.</p>
+    <div class="field-grid">
+      <div class="field">
+        <label>기본 경기시간 (분)</label>
+        <input type="number" min="1" max="60" data-set="defaultDuration">
+      </div>
+      <div class="field">
+        <label>한 조 최대 인원</label>
+        <input type="number" min="2" max="64" data-set="maxPoolSize">
+        <span class="hint">초과 시 A·B·C… 조로 균등 분할</span>
+      </div>
+      <div class="field">
+        <label>매트 수</label>
+        <input type="number" min="1" max="12" data-set="mats">
+      </div>
+      <div class="field">
+        <label>1경기 시작 시각</label>
+        <input type="text" placeholder="10:00" data-set="startTime">
+      </div>
+      <div class="field">
+        <label>경기 사이 여유 (분)</label>
+        <input type="number" min="0" max="30" data-set="gapMin">
+      </div>
+      <div class="field">
+        <label>경기번호 방식</label>
+        <select data-set="numbering">
+          <option value="global">대회 전체 연번</option>
+          <option value="mat">매트별 연번 (1-1, 1-2…)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>3위 결정</label>
+        <select data-set="thirdPlace">
+          <option value="shared">공동 3위 (준결승 패자)</option>
+          <option value="match">3위 결정전 진행</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>같은 소속팀 1회전 회피</label>
+        <select data-set="avoidSameTeam">
+          <option value="1">사용</option>
+          <option value="0">사용 안 함</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>대진 추첨 시드값</label>
+        <input type="number" data-set="randomSeed">
+        <span class="hint">같은 값이면 같은 대진이 재현됩니다</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 03 ] 대진 자동 생성</h2>
+    <p class="desc">
+      <b style="color:var(--white)">전체 재생성</b>은 현재 초안의 선수 배치와 입력된 경기 결과를 모두 새로 만듭니다(직전 초안은 자동 백업).
+      경기번호·매트·예상시간만 다시 맞추려면 오른쪽 버튼을 사용하세요.
+    </p>
+    <div class="admin-actions">
+      <button class="btn btn-primary" id="generateBtn" type="button">명단으로 대진 전체 생성</button>
+      <button class="btn btn-outline" id="rescheduleBtn" type="button">경기번호·시간만 다시 계산</button>
+      <button class="btn btn-outline" id="undoBtn" type="button" disabled>직전 초안 복원</button>
+    </div>
+    <p class="admin-note" id="generateStatus"></p>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 04 ] 부문 · 경기 직접 편집</h2>
+    <p class="desc">
+      선수 배치(1회전), 경기번호, 매트, 예상 경기 시간, 경기시간(분), 진행 상태, 승자와 점수를 직접 수정할 수 있습니다.
+      승자를 선택하면 다음 라운드에 자동 반영되며, 이전 결과를 바꾸면 이후 라운드 결과는 자동으로 무효화됩니다.
+    </p>
+    <div class="field-grid" style="margin-bottom:18px;">
+      <div class="field">
+        <label>부문 선택</label>
+        <select id="divSelect"></select>
+      </div>
+      <div class="field">
+        <label>이 부문 매트</label>
+        <input type="number" min="1" max="12" id="divMat">
+      </div>
+      <div class="field">
+        <label>이 부문 기본 경기시간 (분)</label>
+        <input type="number" min="1" max="60" id="divDuration">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-outline" id="divDeleteBtn" type="button">이 부문 대진 삭제</button>
+      </div>
+    </div>
+    <div class="edit-table-wrap">
+      <table class="edit-table" id="matchTable"></table>
+    </div>
+    <p class="admin-note" id="divWarn"></p>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 05 ] 미리보기 (공개 화면과 동일)</h2>
+    <p class="desc">현재 편집 중인 <b style="color:var(--white)">초안</b> 기준입니다. 게시 전까지 공개 화면에는 노출되지 않습니다.</p>
+    <div class="admin-actions" style="margin-top:0;">
+      <button class="btn btn-outline" id="previewBtn" type="button">선택 부문 미리보기</button>
+      <button class="btn btn-outline" id="previewAllBtn" type="button">전체 미리보기</button>
+    </div>
+    <div id="previewBox"></div>
+  </div>
+
+  <div class="admin-block">
+    <h2>[ 06 ] 저장 · 게시 · 내보내기</h2>
+    <p class="desc">
+      <b style="color:var(--white)">초안 저장</b>은 편집 내용만 서버에 보관합니다(공개 화면 변화 없음).
+      <b style="color:var(--white)">게시</b>를 눌러야 공개 대진표 페이지에 실시간으로 반영됩니다.
+    </p>
+    <div class="admin-actions" style="margin-top:0;">
+      <button class="btn btn-outline" id="saveDraftBtn" type="button">초안 저장</button>
+      <button class="btn btn-primary" id="publishBtn" type="button">지금 사이트에 게시하기</button>
+      <button class="btn btn-outline" id="unpublishBtn" type="button">게시 취소(비우기)</button>
+      <button class="btn btn-outline" id="exportXlsxBtn" type="button">대진 Excel 다운로드</button>
+      <button class="btn btn-outline" id="exportJsonBtn" type="button">JSON 백업</button>
+      <button class="btn btn-outline" id="loadDraftBtn" type="button">서버 초안 다시 불러오기</button>
+    </div>
+    <div class="admin-actions">
+      <span class="status-line" id="publishStatus">불러오는 중…</span>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="assets/js/supabase-config.js"></script>
+<script>
+(function(){
+  var gate = document.getElementById('adminGate');
+  var content = document.getElementById('adminContent');
+  var form = document.getElementById('adminGateForm');
+  var pwInput = document.getElementById('adminGatePw');
+  var submitBtn = document.getElementById('adminGateSubmit');
+  var errorEl = document.getElementById('adminGateError');
+
+  var sb = supabase.createClient(window.SPYDER_SUPABASE_URL, window.SPYDER_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    submitBtn.disabled = true;
+    sb.auth.signInWithPassword({
+      email: window.SPYDER_ADMIN_EMAIL,
+      password: pwInput.value
+    }).then(function(res){
+      submitBtn.disabled = false;
+      if (res.error) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = '로그인 실패: ' + res.error.message + ' (status ' + res.error.status + ')';
+        pwInput.value = '';
+        pwInput.focus();
+        return;
+      }
+      errorEl.style.display = 'none';
+      gate.style.display = 'none';
+      content.style.display = '';
+      window.SPYDER_BRACKET_ADMIN_INIT(sb);
+    });
+  });
+})();
+</script>
+<script src="assets/js/bracket-core.js?v=1"></script>
+<script src="assets/js/bracket-render.js?v=1"></script>
+<script src="assets/js/admin-bracket.js?v=1"></script>
+</body>
+</html>
