@@ -188,6 +188,169 @@
     setStatus(generateStatus, '"' + last.label + '" 상태로 복원했습니다.', 'ok');
   }
 
+  /* ---------- 엑셀 대진 가져오기 ---------- */
+
+  var IMP = window.SPYDER_BRACKET_IMPORT;
+  var lastImport = null;
+
+  function renderImportHint() {
+    var el = $('#importHint');
+    if (el && IMP) el.textContent = '열 순서: ' + IMP.headerLine();
+  }
+
+  function downloadTemplate() {
+    if (typeof XLSX === 'undefined') { alert('엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'); return; }
+    XLSX.writeFile(IMP.buildTemplateWorkbook(XLSX), '대진표_업로드_양식.xlsx');
+  }
+
+  function issueTable(list, kind) {
+    if (!list.length) return '';
+    var shown = list.slice(0, 200);
+    var rows = shown.map(function (e) {
+      return '<tr>' +
+        '<td class="c-row">' + (e.row ? e.row + '행' : '-') + '</td>' +
+        '<td class="c-col">' + esc(e.column) + '</td>' +
+        '<td>' + esc(e.value || '(비어 있음)') + '</td>' +
+        '<td>' + esc(e.reason) + '</td>' +
+        '<td>' + esc(e.fix || '') + '</td>' +
+      '</tr>';
+    }).join('');
+    return '<div class="issue-title is-' + kind + '">' +
+        (kind === 'err' ? '오류 ' : '경고 ') + list.length + '건' +
+        (list.length > shown.length ? ' (상위 ' + shown.length + '건 표시)' : '') +
+      '</div>' +
+      '<div class="issue-wrap"><table class="issue-table">' +
+        '<thead><tr><th>행</th><th>열</th><th>입력값</th><th>사유</th><th>해결 방법</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function renderImportResult(res) {
+    var box = $('#importResult');
+    if (!box) return;
+    var s = res.summary;
+    var applyBtn = $('#importApplyBtn');
+    var errBtn = $('#importErrorXlsxBtn');
+
+    if (!s) {
+      box.innerHTML = issueTable(res.errors, 'err');
+      if (applyBtn) applyBtn.disabled = true;
+      if (errBtn) errBtn.disabled = !res.errors.length;
+      return;
+    }
+
+    var stats = [
+      { n: s.total, l: '전체 행' },
+      { n: s.valid, l: '유효 행', c: s.valid ? 'is-ok' : '' },
+      { n: s.invalid, l: '오류 행', c: s.invalid ? 'is-err' : '' },
+      { n: s.warnings, l: '경고', c: s.warnings ? 'is-warn' : '' },
+      { n: s.divisions, l: '부문' },
+      { n: s.players, l: '선수' },
+      { n: s.matches, l: '실제 경기' }
+    ].map(function (x) {
+      return '<div class="import-stat ' + (x.c || '') + '"><b>' + x.n + '</b><span>' + x.l + '</span></div>';
+    }).join('');
+
+    box.innerHTML = '<div class="import-summary">' + stats + '</div>' +
+      issueTable(res.errors, 'err') +
+      issueTable(res.warnings, 'warn') +
+      (s.valid
+        ? '<p class="admin-note">아래 <b>[검증 결과 초안에 반영]</b>을 누르면 유효한 ' + s.valid + '개 행으로 부문 ' + s.divisions + '개가 초안에 반영됩니다. (게시 전까지 공개 화면에는 영향 없음)</p>'
+        : '<p class="admin-note">반영할 수 있는 유효한 행이 없습니다. 오류를 수정한 뒤 다시 검증해 주세요.</p>');
+
+    if (applyBtn) applyBtn.disabled = !s.valid;
+    if (errBtn) errBtn.disabled = !res.errors.length;
+  }
+
+  function runImport(rows) {
+    if (!IMP) { alert('가져오기 모듈을 불러오지 못했습니다.'); return; }
+    lastImport = IMP.parse(rows, draft.settings);
+    renderImportResult(lastImport);
+  }
+
+  function importFromPaste() {
+    var ta = $('#importPaste');
+    if (!ta || !ta.value.trim()) { alert('붙여넣은 데이터가 없습니다.'); return; }
+    runImport(IMP.parseText(ta.value));
+  }
+
+  function importFromFile(file) {
+    if (typeof XLSX === 'undefined') { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array', cellDates: false });
+        // "대진" 시트를 우선 사용하고, 없으면 첫 시트
+        var sheetName = wb.SheetNames.filter(function (n) { return n.replace(/\s/g, '') === '대진'; })[0] || wb.SheetNames[0];
+        var rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: false });
+        runImport(rows);
+      } catch (err) {
+        alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function applyImport() {
+    if (!lastImport || !lastImport.state || !lastImport.state.divisions.length) return;
+    var mode = ($('#importMode') || {}).value || 'replace';
+    var incoming = B.clone(lastImport.state.divisions);
+
+    var msg = mode === 'replace'
+      ? '현재 초안의 모든 부문을 엑셀 내용(부문 ' + incoming.length + '개)으로 교체합니다.'
+      : '엑셀에 있는 부문 ' + incoming.length + '개만 교체하고 나머지 부문은 그대로 둡니다.';
+    if (hasResults()) msg += '\n\n⚠ 교체되는 부문에 입력된 경기 결과는 사라집니다.';
+    msg += '\n\n직전 초안은 자동 백업됩니다. 계속할까요?';
+    if (!confirm(msg)) return;
+
+    pushUndo('엑셀 가져오기 직전');
+
+    if (mode === 'replace') {
+      draft.divisions = incoming;
+    } else {
+      var titles = {};
+      incoming.forEach(function (d) { titles[d.title] = true; });
+      draft.divisions = draft.divisions.filter(function (d) { return !titles[d.title]; }).concat(incoming);
+    }
+
+    B.scheduleAll(draft);
+    // 엑셀에 적힌 경기번호·매트·시각은 가져오기 시점 값이 우선
+    var byIdNew = B.indexMatches(draft);
+    incoming.forEach(function (src) {
+      B.allMatches(src).forEach(function (sm) {
+        var m = byIdNew[sm.id];
+        if (!m || B.isSkippedMatch(m, byIdNew)) return;
+        if (sm.no) m.no = sm.no;
+        if (sm.mat) m.mat = sm.mat;
+        if (sm.time) m.time = sm.time;
+        if (sm.duration) m.duration = sm.duration;
+      });
+    });
+
+    byId = byIdNew;
+    currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
+    markDirty();
+    renderAll();
+    setStatus(generateStatus,
+      '엑셀 대진을 초안에 반영했습니다. 부문 ' + incoming.length + '개 · 선수 ' + lastImport.summary.players + '명. [06]에서 게시하세요.', 'ok');
+    var box = $('#importResult');
+    if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function exportErrorRows() {
+    if (!lastImport || !lastImport.errors.length) return;
+    if (typeof XLSX === 'undefined') { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
+    var rows = [['행', '열', '입력값', '사유', '해결 방법']].concat(
+      lastImport.errors.map(function (e) {
+        return [e.row, e.column, e.value, e.reason, e.fix].map(safeCell);
+      })
+    );
+    var wb = XLSX.utils.book_new();
+    var sh = XLSX.utils.aoa_to_sheet(rows);
+    sh['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 18 }, { wch: 42 }, { wch: 46 }];
+    XLSX.utils.book_append_sheet(wb, sh, '오류');
+    XLSX.writeFile(wb, '대진표_업로드_오류.xlsx');
+  }
+
   /* ---------- 부문 편집 ---------- */
 
   function currentDivision() {
@@ -654,6 +817,7 @@
     renderFieldMap();
     renderSettings();
     renderDivisionPreview();
+    renderImportHint();
     renderMatchTable();
     renderHistory();
   }
@@ -666,7 +830,24 @@
   }
 
   bind('reloadRosterBtn', loadRoster);
+  bind('downloadTemplateBtn', downloadTemplate);
+  bind('importCheckBtn', importFromPaste);
+  bind('importApplyBtn', applyImport);
+  bind('importErrorXlsxBtn', exportErrorRows);
   bind('generateBtn', generate);
+
+  (function () {
+    var fileInput = document.getElementById('importFile');
+    if (!fileInput) return;
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      var label = document.getElementById('importFileName');
+      if (label) label.textContent = file.name;
+      importFromFile(file);
+      fileInput.value = '';
+    });
+  })();
   bind('rescheduleBtn', reschedule);
   bind('undoBtn', undo);
   bind('previewBtn', function () { renderPreview(false); });

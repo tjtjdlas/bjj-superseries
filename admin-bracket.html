@@ -91,6 +91,45 @@
   }
   .history-row button:hover{ border-color:var(--red); color:var(--red); }
 
+  .paste-hint{
+    font-family:var(--mono); font-size:12px; line-height:1.4; color:var(--gold);
+    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:10px 14px; margin-bottom:14px; overflow-x:auto; white-space:nowrap;
+  }
+  textarea#importPaste{
+    width:100%; min-height:150px; background:var(--bg-card); border:1px solid var(--line);
+    border-radius:var(--r-md); color:var(--white); padding:14px; font-family:var(--font);
+    font-size:13px; resize:vertical;
+  }
+  textarea#importPaste:focus{ outline:none; border-color:var(--red); }
+
+  .import-summary{ display:flex; flex-wrap:wrap; gap:10px; margin:20px 0 14px; }
+  .import-stat{
+    border:1px solid var(--line); border-radius:var(--r-md); padding:12px 16px; min-width:104px;
+    background:rgba(255,255,255,0.02);
+  }
+  .import-stat b{ display:block; font-family:var(--mono); font-size:19px; color:var(--white); line-height:1.2; }
+  .import-stat span{ font-size:11px; color:var(--mute-2); letter-spacing:0.5px; }
+  .import-stat.is-err b{ color:#ff6b76; }
+  .import-stat.is-warn b{ color:var(--gold); }
+  .import-stat.is-ok b{ color:#6ee7a8; }
+
+  .issue-table{ width:100%; border-collapse:collapse; margin-top:8px; }
+  .issue-table th, .issue-table td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--line-2);
+    font-size:12.5px; color:var(--mute); vertical-align:top;
+  }
+  .issue-table th{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:0.8px; text-transform:uppercase;
+    color:var(--mute-2); background:#15161c; position:sticky; top:0;
+  }
+  .issue-table td.c-row{ font-family:var(--mono); color:var(--white); white-space:nowrap; }
+  .issue-table td.c-col{ color:var(--white); white-space:nowrap; }
+  .issue-wrap{ border:1px solid var(--line); border-radius:var(--r-md); overflow:auto; max-height:320px; margin-bottom:16px; }
+  .issue-title{ font-size:12.5px; color:var(--white); font-weight:700; margin:16px 0 6px; }
+  .issue-title.is-err{ color:#ff6b76; }
+  .issue-title.is-warn{ color:var(--gold); }
+
   #previewBox{ margin-top:20px; }
   #previewBox .bkt-division{ background:var(--bg-1); }
 
@@ -236,6 +275,35 @@
   </div>
 
   <div class="admin-block">
+    <h2>[ 03-B ] 엑셀 대진 붙여넣기 · 업로드</h2>
+    <p class="desc">
+      엑셀에 <b style="color:var(--white)">1회전 대진을 직접 그려 넣은 뒤</b> 그대로 가져오는 방식입니다.
+      한 행이 한 경기(선수 2명)이고, 위에서부터 적은 순서가 대진도의 위→아래 순서가 됩니다.
+      8강·4강·결승 등 다음 라운드와 승자 전파는 사이트가 자동으로 이어 만듭니다.
+    </p>
+    <div class="paste-hint" id="importHint"></div>
+    <div class="admin-actions" style="margin-top:0; margin-bottom:14px;">
+      <button class="btn btn-outline" id="downloadTemplateBtn" type="button">엑셀 양식 다운로드</button>
+      <label class="btn btn-outline" for="importFile" style="cursor:pointer;">엑셀 파일 첨부</label>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none;">
+      <span class="desc" id="importFileName" style="margin:0;"></span>
+    </div>
+    <textarea id="importPaste" placeholder="엑셀에서 머리글 행을 포함해 셀 범위를 복사(Ctrl+C)한 뒤 여기에 붙여넣으세요(Ctrl+V)."></textarea>
+    <div class="admin-actions">
+      <button class="btn btn-outline" id="importCheckBtn" type="button">붙여넣은 데이터 검증</button>
+      <div class="field" style="min-width:210px; gap:0;">
+        <select id="importMode" aria-label="반영 방식">
+          <option value="replace">반영 방식: 전체 교체</option>
+          <option value="merge">반영 방식: 같은 부문만 교체(나머지 유지)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="importApplyBtn" type="button" disabled>검증 결과 초안에 반영</button>
+      <button class="btn btn-outline" id="importErrorXlsxBtn" type="button" disabled>오류 행만 엑셀로 받기</button>
+    </div>
+    <div id="importResult"></div>
+  </div>
+
+  <div class="admin-block">
     <h2>[ 04 ] 부문 · 경기 직접 편집</h2>
     <p class="desc">
       선수 배치(1회전), 경기번호, 매트, 예상 경기 시간, 경기시간(분), 진행 상태, 승자와 점수를 직접 수정할 수 있습니다.
@@ -340,6 +408,7 @@
 </script>
 <script src="assets/js/bracket-core.js?v=1"></script>
 <script src="assets/js/bracket-render.js?v=1"></script>
-<script src="assets/js/admin-bracket.js?v=1"></script>
+<script src="assets/js/bracket-import.js?v=1"></script>
+<script src="assets/js/admin-bracket.js?v=2"></script>
 </body>
 </html>

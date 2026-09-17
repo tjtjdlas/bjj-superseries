@@ -200,10 +200,46 @@
     return entry ? { entryId: entry.id } : { bye: true };
   }
 
+  // 이미 정해진 슬롯 배열(길이 = 2의 거듭제곱)로 토너먼트 트리를 만든다.
+  // 자동 생성과 엑셀 대진 가져오기가 이 함수를 공유한다.
+  function buildBracketMatches(divId, poolName, slots, settings, finalLabel) {
+    var matches = [];
+    var size = slots.length;
+    if (size < 2) return matches;
+
+    var rounds = Math.round(Math.log(size) / Math.log(2));
+    var prevIds = [];
+
+    for (var r = 0; r < rounds; r++) {
+      var count = size / Math.pow(2, r + 1);
+      var ids = [];
+      for (var i = 0; i < count; i++) {
+        var id = divId + '-' + poolName + '-r' + r + '-' + i;
+        var pair = (r === 0)
+          ? [slots[i * 2], slots[i * 2 + 1]]
+          : [{ from: prevIds[i * 2] }, { from: prevIds[i * 2 + 1] }];
+        matches.push({
+          id: id,
+          pool: poolName,
+          round: r,
+          order: i,
+          label: (count === 1 && finalLabel) ? finalLabel : roundLabel(count),
+          slots: pair,
+          no: null, mat: null, time: null,
+          duration: settings.defaultDuration,
+          winner: null, s1: '', s2: '', method: '', note: '',
+          status: '예정'
+        });
+        ids.push(id);
+      }
+      prevIds = ids;
+    }
+    return matches;
+  }
+
   function buildPoolMatches(divId, poolName, entries, settings, rnd, conflicts) {
     var n = entries.length;
-    var matches = [];
-    if (n < 2) return matches;
+    if (n < 2) return [];
 
     var size = nextPow2(n);
     var order = seedSlots(size);
@@ -220,34 +256,7 @@
 
     if (settings.avoidSameTeam) avoidSameTeamPairs(placed, conflicts);
 
-    var rounds = Math.round(Math.log(size) / Math.log(2));
-    var prevIds = [];
-
-    for (var r = 0; r < rounds; r++) {
-      var count = size / Math.pow(2, r + 1);
-      var ids = [];
-      for (var i = 0; i < count; i++) {
-        var id = divId + '-' + poolName + '-r' + r + '-' + i;
-        var slots = (r === 0)
-          ? [slotFor(placed[i * 2]), slotFor(placed[i * 2 + 1])]
-          : [{ from: prevIds[i * 2] }, { from: prevIds[i * 2 + 1] }];
-        matches.push({
-          id: id,
-          pool: poolName,
-          round: r,
-          order: i,
-          label: roundLabel(count),
-          slots: slots,
-          no: null, mat: null, time: null,
-          duration: settings.defaultDuration,
-          winner: null, s1: '', s2: '', method: '', note: '',
-          status: '예정'
-        });
-        ids.push(id);
-      }
-      prevIds = ids;
-    }
-    return matches;
+    return buildBracketMatches(divId, poolName, placed.map(slotFor), settings);
   }
 
   function buildDivision(group, index, settings, rnd) {
@@ -262,40 +271,7 @@
       };
     });
 
-    var finals = [];
-    if (pools.length > 1) {
-      // 각 조 우승자가 만나는 최종 결승 (조가 3개 이상이면 2의 거듭제곱으로 확장 후 BYE)
-      var poolFinals = pools.map(function (p) {
-        var last = p.matches[p.matches.length - 1];
-        return last ? { from: last.id } : (p.entries[0] ? { entryId: p.entries[0].id } : { bye: true });
-      });
-      var fsize = nextPow2(poolFinals.length);
-      while (poolFinals.length < fsize) poolFinals.push({ bye: true });
-
-      var frounds = Math.round(Math.log(fsize) / Math.log(2));
-      var prev = null;
-      for (var r = 0; r < frounds; r++) {
-        var count = fsize / Math.pow(2, r + 1);
-        var ids = [];
-        for (var i = 0; i < count; i++) {
-          var id = divId + '-F-r' + r + '-' + i;
-          var slots = (r === 0)
-            ? [poolFinals[i * 2], poolFinals[i * 2 + 1]]
-            : [{ from: prev[i * 2] }, { from: prev[i * 2 + 1] }];
-          finals.push({
-            id: id, pool: 'F', round: r, order: i,
-            label: count === 1 ? '최종 결승' : roundLabel(count),
-            slots: slots,
-            no: null, mat: null, time: null,
-            duration: settings.defaultDuration,
-            winner: null, s1: '', s2: '', method: '', note: '',
-            status: '예정'
-          });
-          ids.push(id);
-        }
-        prev = ids;
-      }
-    }
+    var finals = buildFinals(divId, pools, settings);
 
     var division = {
       id: divId,
@@ -311,19 +287,34 @@
       entryCount: group.entries.length
     };
 
-    // 3위 결정전 (설정 시)
-    if (settings.thirdPlace === 'match') {
-      var semi = lastSemifinals(division);
-      if (semi.length === 2) {
-        division.thirdPlace = {
-          id: divId + '-3RD', pool: 'F', round: 98, order: 0, label: '3위 결정전',
-          slots: [{ from: semi[0], loser: true }, { from: semi[1], loser: true }],
-          no: null, mat: null, time: null, duration: settings.defaultDuration,
-          winner: null, s1: '', s2: '', method: '', note: '', status: '예정'
-        };
-      }
-    }
+    attachThirdPlace(division, settings);
+    return division;
+  }
 
+  // 각 조 우승자가 만나는 최종 결승 (조가 3개 이상이면 2의 거듭제곱으로 확장 후 BYE)
+  function buildFinals(divId, pools, settings) {
+    if (!pools || pools.length < 2) return [];
+    var poolFinals = pools.map(function (p) {
+      var last = p.matches[p.matches.length - 1];
+      return last ? { from: last.id } : (p.entries[0] ? { entryId: p.entries[0].id } : { bye: true });
+    });
+    var fsize = nextPow2(poolFinals.length);
+    while (poolFinals.length < fsize) poolFinals.push({ bye: true });
+    return buildBracketMatches(divId, 'F', poolFinals, settings, '최종 결승');
+  }
+
+  // 3위 결정전 (설정 시)
+  function attachThirdPlace(division, settings) {
+    division.thirdPlace = null;
+    if (settings.thirdPlace !== 'match') return division;
+    var semi = lastSemifinals(division);
+    if (semi.length !== 2) return division;
+    division.thirdPlace = {
+      id: division.id + '-3RD', pool: 'F', round: 98, order: 0, label: '3위 결정전',
+      slots: [{ from: semi[0], loser: true }, { from: semi[1], loser: true }],
+      no: null, mat: null, time: null, duration: settings.defaultDuration,
+      winner: null, s1: '', s2: '', method: '', note: '', status: '예정'
+    };
     return division;
   }
 
@@ -350,11 +341,11 @@
   }
 
   // BYE 로 실제 치러지지 않는 경기인지 판정
+  // 한쪽이 BYE면 상대가 확정이든 미정이든 부전승(통과) 경기다.
   function isSkippedMatch(match, byId) {
     var occ = resolveSlots(match, byId);
     var byes = occ.filter(function (o) { return o.kind === 'bye'; }).length;
-    var tbd = occ.filter(function (o) { return o.kind === 'tbd'; }).length;
-    return byes > 0 && tbd === 0 && occ.filter(function (o) { return o.kind === 'entry'; }).length <= 1;
+    return byes > 0 && (occ.length - byes) <= 1;
   }
 
   function scheduleAll(state) {
@@ -539,8 +530,13 @@
     clone: clone,
     escapeHtml: escapeHtml,
     divisionTitle: divisionTitle,
+    slugify: slugify,
     groupAthletes: groupAthletes,
     generate: generate,
+    nextPow2: nextPow2,
+    buildBracketMatches: buildBracketMatches,
+    buildFinals: buildFinals,
+    attachThirdPlace: attachThirdPlace,
     emptyState: emptyState,
     normalizeState: normalizeState,
     mergeSettings: mergeSettings,
