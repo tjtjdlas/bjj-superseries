@@ -233,7 +233,9 @@
 }
 .bkt-no{ color:var(--white); font-weight:700; }
 .bkt-time{ color:var(--gold); font-weight:700; margin-left:auto; }
-.bkt-dur{ color:var(--mute-2); }
+/* 예상 시작시각을 감춘 상태에서는 경기시간(분)이 오른쪽 끝에 붙는다 */
+.bkt-dur{ color:var(--mute-2); margin-left:auto; }
+.bkt-time + .bkt-dur{ margin-left:0; }
 .bkt-status{
   font-family:var(--font); font-size:9.5px; font-weight:700; letter-spacing:0.5px;
   padding:3px 7px; border-radius:var(--r-pill); line-height:1;
@@ -338,8 +340,7 @@
   .bkt-name{ font-size:12.5px; }
   .bkt-team{ max-width:70px; }
   .bkt-cell{ min-height:80px; }
-  /* 좁은 화면에서 카드 헤더가 두 줄로 접히지 않도록 경기시간(분)은 숨김 */
-  .bkt-dur{ display:none; }
+  /* 좁은 화면에서 카드 헤더가 두 줄로 접히지 않도록 */
   .bkt-match-head{ flex-wrap:nowrap; gap:6px; padding:7px 9px; }
   .bkt-slot{ padding:10px; gap:7px; }
 }

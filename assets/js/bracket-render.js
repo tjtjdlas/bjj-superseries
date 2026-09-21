@@ -5,6 +5,10 @@
   var B = global.SPYDER_BRACKET;
   var esc = B.escapeHtml;
 
+  // 예상 시작시각(10:00 등)을 공개 화면에 표시할지 여부.
+  // 데이터·관리자 입력칸·엑셀 열은 그대로 유지되며, 여기만 true 로 바꾸면 즉시 다시 노출된다.
+  var SHOW_TIME = false;
+
   /* ---------- 검색 유틸 (부분 문자열 + 한글 초성) ---------- */
 
   var CHO = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
@@ -90,12 +94,13 @@
         (match.no ? '<span class="bkt-no">#' + esc(match.no) + '</span>' : '<span class="bkt-no">—</span>') +
         (match.mat ? '<span class="bkt-mat">MAT ' + esc(match.mat) + '</span>' : '') +
         '<span class="bkt-status ' + statusClass(status) + '">' + esc(status) + '</span>' +
-        (match.time ? '<span class="bkt-time" title="예상 경기 시간">' + esc(match.time) + '</span>' : '') +
+        (SHOW_TIME && match.time ? '<span class="bkt-time" title="예상 경기 시간">' + esc(match.time) + '</span>' : '') +
         (match.duration && !skipped ? '<span class="bkt-dur">' + esc(match.duration) + '분</span>' : '') +
       '</div>';
 
     var aria = match.label + (match.no ? ' 경기번호 ' + match.no : '') +
-      (match.time ? ', 예상 시작 ' + match.time : '') + (skipped ? ', 부전승 경기' : '');
+      (match.mat ? ', 매트 ' + match.mat : '') +
+      (SHOW_TIME && match.time ? ', 예상 시작 ' + match.time : '') + (skipped ? ', 부전승 경기' : '');
 
     return {
       html: '<div class="bkt-match' + (skipped ? ' is-bye' : '') + (hit ? ' is-hit' : '') + '"' +
@@ -201,7 +206,7 @@
       '<span class="bkt-tag">참가 ' + (division.entryCount || 0) + '명</span>',
       poolCount > 1 ? '<span class="bkt-tag">' + poolCount + '개 조</span>' : '',
       division.mat ? '<span class="bkt-tag is-accent">MAT ' + esc(division.mat) + '</span>' : '',
-      firstTimeOf(division) ? '<span class="bkt-tag is-accent">시작 ' + esc(firstTimeOf(division)) + '</span>' : '',
+      (SHOW_TIME && firstTimeOf(division)) ? '<span class="bkt-tag is-accent">시작 ' + esc(firstTimeOf(division)) + '</span>' : '',
       (division.conflicts && division.conflicts.length) ? '<span class="bkt-tag is-red" title="같은 소속팀 1회전 회피 불가">동일팀 대결 ' + division.conflicts.length + '건</span>' : ''
     ].filter(Boolean).join('');
 
@@ -228,6 +233,7 @@
   }
 
   global.SPYDER_BRACKET_RENDER = {
+    SHOW_TIME: SHOW_TIME,
     renderDivision: renderDivision,
     renderRounds: renderRounds,
     renderMatch: renderMatch,
