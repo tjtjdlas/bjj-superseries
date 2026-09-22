@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- 데이터 ---------- */
 
   // 대진표 공개 예정 안내. 대진표가 게시되면 이 안내는 자동으로 사라진다.
-  var COMING_SOON_TITLE = '대진표는 9월 23일부터 조회하실 수 있습니다.';
-  var COMING_SOON_DESC = '부문별 대진이 준비되는 대로 순차 공개되며, 공개 즉시 이 화면에 자동으로 반영됩니다. 그때까지는 참가 선수 명단에서 접수 현황을 확인해 주세요.';
+  var COMING_SOON_TITLE = '대진표는 10월 7일 이후 조회가 가능합니다.';
+  var COMING_SOON_DESC = '부문별 대진이 준비되는 대로 순차 공개되며, 대진표 공개 전까지는 참가 선수 명단에서 접수 현황을 확인해주시기 바랍니다.';
 
   function showComingSoon() {
     listEl.innerHTML = emptyBox(COMING_SOON_TITLE, COMING_SOON_DESC);
