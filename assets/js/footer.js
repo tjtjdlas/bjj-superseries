@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <a href="brackets.html">대진표</a>
         </div>
         <div class="footer-col">
-          <h5>TICKET & CONTACT</h5>
-          <a href="tickets.html">티켓 예매 안내</a>
+          <h5>SHOP & CONTACT</h5>
+          <a href="https://spyder.co.kr/product/search.html?banner_action=&amp;keyword=RVCA+BJJ&amp;sort_method=5" target="_blank" rel="noopener">SPYDER X RVCA 도복 · 벨트</a>
+          <a href="tickets.html">대회 안내 · FAQ</a>
           <span>주최: SPYDER</span>
         </div>
       </div>
