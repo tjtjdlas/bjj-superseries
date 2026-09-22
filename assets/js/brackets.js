@@ -57,11 +57,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- 데이터 ---------- */
 
+  // 대진표 공개 예정 안내. 대진표가 게시되면 이 안내는 자동으로 사라진다.
+  var COMING_SOON_TITLE = '대진표는 9월 23일부터 조회하실 수 있습니다.';
+  var COMING_SOON_DESC = '부문별 대진이 준비되는 대로 순차 공개되며, 공개 즉시 이 화면에 자동으로 반영됩니다. 그때까지는 참가 선수 명단에서 접수 현황을 확인해 주세요.';
+
+  function showComingSoon() {
+    listEl.innerHTML = emptyBox(COMING_SOON_TITLE, COMING_SOON_DESC);
+    if (countEl) countEl.textContent = '';
+    if (updatedEl) updatedEl.textContent = '';
+    if (mineBtn) { mineBtn.classList.remove('is-on'); mineBtn.setAttribute('aria-pressed', 'false'); mineBtn.disabled = true; }
+  }
+
   var SUPABASE_URL = window.SPYDER_SUPABASE_URL;
   var SUPABASE_ANON_KEY = window.SPYDER_SUPABASE_ANON_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || typeof supabase === 'undefined') {
-    listEl.innerHTML = emptyBox('대진표 서비스 설정이 필요합니다.', '관리자에게 문의해 주세요.');
+    console.warn('[대진표] Supabase 설정이 없어 공개 예정 안내만 표시합니다.');
+    showComingSoon();
     return;
   }
 
@@ -81,7 +93,9 @@ document.addEventListener('DOMContentLoaded', function () {
   sb.from('bracket_state').select('published, published_at, version').eq('id', 1).single()
     .then(function (res) {
       if (res.error || !res.data) {
-        listEl.innerHTML = emptyBox('대진표를 불러오지 못했습니다.', '잠시 후 다시 시도해 주세요.');
+        // 테이블 미생성 등으로 조회가 안 될 때도 이용자에게는 공개 예정 안내를 보여준다.
+        console.warn('[대진표] 조회 실패:', res.error && res.error.message);
+        showComingSoon();
         return;
       }
       applyState(res.data.published, res.data.published_at);
@@ -182,9 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (!state.divisions.length) {
-      listEl.innerHTML = emptyBox('아직 공개된 대진표가 없습니다.',
-        '대진표는 접수 마감 후 부문별로 순차 공개됩니다. 참가 선수 명단에서 접수 현황을 먼저 확인해 주세요.');
-      if (countEl) countEl.textContent = '';
+      showComingSoon();
       return;
     }
 
