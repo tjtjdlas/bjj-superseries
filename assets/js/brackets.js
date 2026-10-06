@@ -1,5 +1,5 @@
 /* SPYDER BJJ SUPERSERIES — 공개 대진표 페이지
- * bracket_state.published(게시본)만 표시하며, 게시 즉시 실시간 반영됩니다.
+ * 게시본(roster_state.data.bracket)만 표시하며, 게시 즉시 실시간 반영됩니다.
  */
 document.addEventListener('DOMContentLoaded', function () {
   var B = window.SPYDER_BRACKET;
@@ -90,21 +90,32 @@ document.addEventListener('DOMContentLoaded', function () {
     render();
   }
 
-  sb.from('bracket_state').select('published, published_at, version').eq('id', 1).single()
-    .then(function (res) {
-      if (res.error || !res.data) {
-        // 테이블 미생성 등으로 조회가 안 될 때도 이용자에게는 공개 예정 안내를 보여준다.
-        console.warn('[대진표] 조회 실패:', res.error && res.error.message);
-        showComingSoon();
-        return;
-      }
-      applyState(res.data.published, res.data.published_at);
-    });
+  // 대진표는 기존 명단 테이블(roster_state)의 data.bracket 안에 저장된다.
+  // 공개 화면은 그중 게시본만 골라 읽으므로 전송량이 작다.
+  function fetchPublished() {
+    return sb.from('roster_state').select('bracket:data->bracket').eq('id', 1).single();
+  }
 
-  sb.channel('bracket_state_public')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bracket_state', filter: 'id=eq.1' }, function (payload) {
-      applyState(payload.new.published, payload.new.published_at);
-      toast('대진표가 업데이트되었습니다.');
+  fetchPublished().then(function (res) {
+    if (res.error) {
+      console.warn('[대진표] 조회 실패:', res.error.message);
+      showComingSoon();
+      return;
+    }
+    var bk = res.data && res.data.bracket;
+    applyState(bk, bk && bk.publishedAt);
+  });
+
+  // 게시되면 즉시 반영. 변경 알림만 받고 내용은 다시 조회한다(큰 데이터도 안전).
+  sb.channel('bracket_public')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'roster_state', filter: 'id=eq.1' }, function () {
+      fetchPublished().then(function (res) {
+        if (res.error) return;
+        var bk = res.data && res.data.bracket;
+        var before = state.divisions.length;
+        applyState(bk, bk && bk.publishedAt);
+        if (state.divisions.length || before) toast('대진표가 업데이트되었습니다.');
+      });
     })
     .subscribe();
 

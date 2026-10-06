@@ -224,9 +224,17 @@
     allSaveBtns.forEach(btn => { btn.disabled = true; });
     publishStatus.textContent = '반영 중...';
     try {
+      // 같은 행에 대진표(bracket / bracketAdmin)도 함께 저장되므로 덮어쓰지 않도록 보존한다.
+      const current = await sb.from('roster_state').select('data').eq('id', 1).single();
+      if (current.error) throw current.error;
+      const prev = (current.data && current.data.data) || {};
+      const merged = { categories: state.categories, athletes: state.athletes };
+      if (prev.bracket) merged.bracket = prev.bracket;
+      if (prev.bracketAdmin) merged.bracketAdmin = prev.bracketAdmin;
+
       const { error } = await sb
         .from('roster_state')
-        .update({ data: state })
+        .update({ data: merged })
         .eq('id', 1);
       if (error) throw error;
       publishStatus.textContent = '반영 완료! 명단 페이지에 실시간으로 즉시 반영됩니다.';

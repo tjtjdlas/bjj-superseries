@@ -1,5 +1,5 @@
 /* SPYDER BJJ SUPERSERIES — 대진표 관리자
- * roster_state(참가자 명단) → bracket_state.draft(초안) → bracket_state.published(게시본)
+ * 참가자 명단과 같은 행(roster_state.data)에 저장: bracketAdmin.draft(초안) → bracket(게시본)
  */
 (function () {
   'use strict';
@@ -592,10 +592,38 @@
 
   /* ---------- 저장 / 게시 ---------- */
 
-  async function fetchRecord() {
-    var res = await sb.from('bracket_state').select('draft, published, history, version, published_at').eq('id', 1).single();
+  // 대진표는 기존 명단 테이블(roster_state)의 data 안에 함께 저장된다. 별도 테이블/SQL 불필요.
+  //   data.bracket       = 게시본 (+ publishedAt, version)
+  //   data.bracketAdmin  = { draft, history }
+  var HISTORY_MAX = 3;
+
+  async function fetchData() {
+    var res = await sb.from('roster_state').select('data').eq('id', 1).single();
     if (res.error) throw res.error;
-    return res.data;
+    return (res.data && res.data.data) || {};
+  }
+
+  async function fetchRecord() {
+    var data = await fetchData();
+    var pub = data.bracket || null;
+    var adm = data.bracketAdmin || {};
+    return {
+      _data: data,
+      draft: adm.draft || null,
+      published: pub,
+      history: adm.history || [],
+      version: (pub && pub.version) || 0,
+      published_at: (pub && pub.publishedAt) || null
+    };
+  }
+
+  // 명단(categories/athletes)은 건드리지 않고 대진표 부분만 바꿔 저장한다.
+  async function writeBracket(mutate) {
+    var data = await fetchData();
+    mutate(data);
+    var res = await sb.from('roster_state').update({ data: data }).eq('id', 1);
+    if (res.error) throw res.error;
+    return data;
   }
 
   async function loadFromServer(silent) {
@@ -626,8 +654,10 @@
   async function saveDraft(silent) {
     setStatus(publishStatus, '초안 저장 중…');
     try {
-      var res = await sb.from('bracket_state').update({ draft: draft }).eq('id', 1);
-      if (res.error) throw res.error;
+      await writeBracket(function (data) {
+        data.bracketAdmin = data.bracketAdmin || {};
+        data.bracketAdmin.draft = draft;
+      });
       dirty = false;
       if (!silent) setStatus(publishStatus, '초안을 저장했습니다. (공개 화면에는 아직 반영되지 않음)', 'ok');
       return true;
@@ -652,7 +682,7 @@
           return;
         }
       }
-      var history = (row.history || []).slice(0, 9);
+      var history = (row.history || []).slice(0, HISTORY_MAX - 1);
       if (row.published && row.version) {
         history.unshift({
           version: row.version,
@@ -661,18 +691,19 @@
         });
       }
       var nextVersion = (row.version || 0) + 1;
-      var res = await sb.from('bracket_state').update({
-        draft: draft,
-        published: draft,
-        history: history,
-        version: nextVersion,
-        published_at: new Date().toISOString(),
-        published_by: window.SPYDER_ADMIN_EMAIL || ''
-      }).eq('id', 1);
-      if (res.error) throw res.error;
+      var publishedAt = new Date().toISOString();
+      var payload = B.clone(draft);
+      payload.version = nextVersion;
+      payload.publishedAt = publishedAt;
+      payload.publishedBy = window.SPYDER_ADMIN_EMAIL || '';
+
+      await writeBracket(function (data) {
+        data.bracket = payload;
+        data.bracketAdmin = { draft: draft, history: history };
+      });
 
       record.version = nextVersion;
-      record.published_at = new Date().toISOString();
+      record.published_at = publishedAt;
       record.history = history;
       record.published = B.clone(draft);
       dirty = false;
@@ -688,17 +719,18 @@
     if (!confirm('공개 대진표를 비웁니다(초안은 그대로 유지). 계속할까요?')) return;
     try {
       var row = await fetchRecord();
-      var history = (row.history || []).slice(0, 9);
+      var history = (row.history || []).slice(0, HISTORY_MAX - 1);
       if (row.published && row.version) {
         history.unshift({ version: row.version, published_at: row.published_at, snapshot: row.published });
       }
-      var res = await sb.from('bracket_state').update({
-        published: B.emptyState(draft.settings),
-        history: history,
-        version: (row.version || 0) + 1,
-        published_at: null
-      }).eq('id', 1);
-      if (res.error) throw res.error;
+      var cleared = B.emptyState(draft.settings);
+      cleared.version = (row.version || 0) + 1;
+      cleared.publishedAt = null;
+
+      await writeBracket(function (data) {
+        data.bracket = cleared;
+        data.bracketAdmin = { draft: draft, history: history };
+      });
       record.version = (row.version || 0) + 1;
       record.history = history;
       record.published_at = null;
