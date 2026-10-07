@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var esc = B.escapeHtml;
 
   var listEl = document.querySelector('#bracketList');
+  var tabsEl = document.querySelector('#bracketTabs');
   var filterEl = document.querySelector('#bracketFilters');
   var searchEl = document.querySelector('#bracketSearch');
   var chipsEl = document.querySelector('#bracketChips');
@@ -18,16 +19,19 @@ document.addEventListener('DOMContentLoaded', function () {
   var shareBtn = document.querySelector('#bracketShareBtn');
   if (!listEl) return;
 
+  // 그룹 탭(엑셀 시트: 중등부 / 고등부 / 어덜트 블루벨트 …) 안에서 쓰는 세부 필터.
+  // 탭 안에 값이 2개 이상인 항목만 보여 준다.
   var FIELDS = [
     { key: 'age', label: '연령부' },
-    { key: 'gender', label: '성별' },
     { key: 'grade', label: '등급' },
+    { key: 'gender', label: '성별' },
     { key: 'weight', label: '체급' },
     { key: 'mat', label: '매트' }
   ];
 
   var state = B.emptyState();
   var byId = {};
+  var group = '';
   var filters = {};
   var query = '';
   var mineOnly = true;
@@ -37,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function readUrl() {
     var p = new URLSearchParams(location.search);
+    group = p.get('g') || '';
     FIELDS.forEach(function (f) {
       var v = p.get(f.key);
       if (v) filters[f.key] = v;
@@ -48,11 +53,79 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function writeUrl() {
     var p = new URLSearchParams();
+    if (group) p.set('g', group);
     FIELDS.forEach(function (f) { if (filters[f.key]) p.set(f.key, filters[f.key]); });
     if (query) p.set('q', query);
     if (query && !mineOnly) p.set('mine', '0');
     var qs = p.toString();
     history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  }
+
+  /* ---------- 그룹 ---------- */
+
+  // 엑셀 시트로 들어온 부문은 group(시트 이름), 그 밖에는 연령부로 묶는다.
+  function groupOf(d) {
+    return d.group || d.age || '기타';
+  }
+
+  function groupList() {
+    var list = [];
+    var idx = {};
+    state.divisions.forEach(function (d) {
+      var g = groupOf(d);
+      if (idx[g] == null) { idx[g] = list.length; list.push({ name: g, count: 0 }); }
+      list[idx[g]].count++;
+    });
+    return list;
+  }
+
+  function ensureGroup() {
+    var list = groupList();
+    if (!list.some(function (g) { return g.name === group; })) {
+      group = list.length ? list[0].name : '';
+      filters = {};
+    }
+  }
+
+  // 검색어가 있고 "내 대진만 보기"가 켜져 있으면 모든 탭에서 찾는다.
+  function searchingAll() {
+    return !!query && mineOnly;
+  }
+
+  function buildTabs() {
+    if (!tabsEl) return;
+    var list = groupList();
+    if (list.length < 2) {
+      tabsEl.innerHTML = '';
+      tabsEl.hidden = true;
+      return;
+    }
+    tabsEl.hidden = false;
+    tabsEl.classList.toggle('is-muted', searchingAll());
+    tabsEl.innerHTML = list.map(function (g) {
+      var on = g.name === group;
+      return '<button type="button" class="bkt-tab' + (on ? ' is-on' : '') + '" role="tab" aria-selected="' + on + '"' +
+        ' data-group="' + esc(g.name) + '">' + esc(g.name) + '<span class="bkt-tab-count">' + g.count + '</span></button>';
+    }).join('');
+
+    tabsEl.querySelectorAll('[data-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        group = btn.dataset.group;
+        filters = {};
+        if (query) {
+          // 탭을 고르면 그 탭 안에서 보도록 검색 범위를 좁힌다
+          mineOnly = false;
+        }
+        buildTabs();
+        buildFilters();
+        writeUrl();
+        render();
+      });
+    });
+
+    // 선택된 탭이 가로 스크롤 안에서 보이도록 (페이지 세로 위치는 건드리지 않음)
+    var on = tabsEl.querySelector('.bkt-tab.is-on');
+    if (on) tabsEl.scrollLeft = Math.max(0, on.offsetLeft - (tabsEl.clientWidth - on.offsetWidth) / 2);
   }
 
   /* ---------- 데이터 ---------- */
@@ -85,6 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
     state = B.normalizeState(published);
     byId = B.indexMatches(state);
     loaded = true;
+    ensureGroup();
+    buildTabs();
     buildFilters();
     showPublishedAt(publishedAt);
     render();
@@ -130,20 +205,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- 필터 UI ---------- */
 
+  function fieldValue(d, key) {
+    return (key === 'mat') ? (d.mat ? 'MAT ' + d.mat : '') : (d[key] || '');
+  }
+
+  function sortValues(key, vals) {
+    if (key === 'weight') return vals.sort(B.compareWeight);
+    if (key === 'gender') {
+      var rank = { '남성': 0, '남자': 0, '여성': 1, '여자': 1 };
+      return vals.sort(function (a, b) { return (rank[a] == null ? 2 : rank[a]) - (rank[b] == null ? 2 : rank[b]); });
+    }
+    return vals.sort(function (a, b) { return a.localeCompare(b, 'ko', { numeric: true }); });
+  }
+
+  // 현재 탭 안의 값만 (다른 항목 필터는 무시해 선택지가 사라지지 않게)
   function valuesFor(key) {
     var set = {};
     state.divisions.forEach(function (d) {
-      var v = (key === 'mat') ? (d.mat ? 'MAT ' + d.mat : '') : d[key];
+      if (groupOf(d) !== group) return;
+      var v = fieldValue(d, key);
       if (v) set[v] = true;
     });
-    return Object.keys(set).sort(function (a, b) { return a.localeCompare(b, 'ko', { numeric: true }); });
+    return sortValues(key, Object.keys(set));
   }
 
   function buildFilters() {
     if (!filterEl) return;
     filterEl.innerHTML = FIELDS.map(function (f) {
       var vals = valuesFor(f.key);
-      if (!vals.length) return '';
+      if (vals.length < 2 && !filters[f.key]) return '';
       var opts = vals.map(function (v) {
         return '<option value="' + esc(v) + '"' + (filters[f.key] === v ? ' selected' : '') + '>' + esc(v) + '</option>';
       }).join('');
@@ -189,10 +279,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- 렌더 ---------- */
 
-  function passesFilters(d) {
+  function passesFilters(d, ignoreGroup) {
+    if (!ignoreGroup && groupOf(d) !== group) return false;
     for (var k in filters) {
-      var v = (k === 'mat') ? (d.mat ? 'MAT ' + d.mat : '') : (d[k] || '');
-      if (v !== filters[k]) return false;
+      if (fieldValue(d, k) !== filters[k]) return false;
     }
     return true;
   }
@@ -205,26 +295,28 @@ document.addEventListener('DOMContentLoaded', function () {
       mineBtn.setAttribute('aria-pressed', String(mineOnly && !!query));
       mineBtn.disabled = !query;
     }
+    if (tabsEl) tabsEl.classList.toggle('is-muted', searchingAll());
 
     if (!state.divisions.length) {
       showComingSoon();
       return;
     }
 
-    var pool = state.divisions.filter(passesFilters);
+    var all = searchingAll();
+    var pool = state.divisions.filter(function (d) { return passesFilters(d, all); });
     var rendered = [];
     var hitCount = 0;
 
     pool.forEach(function (d) {
       var res = R.renderDivision(d, { byId: byId, query: query });
       if (res.hit) hitCount++;
-      if (query && mineOnly && !res.hit) return;
+      if (all && !res.hit) return;
       rendered.push(res.html);
     });
 
     if (!rendered.length) {
       var why = query
-        ? '"' + esc(query) + '" 에 해당하는 선수를 찾지 못했습니다.'
+        ? '"' + query + '" 에 해당하는 선수를 찾지 못했습니다.'
         : '선택한 조건에 해당하는 부문이 없습니다.';
       listEl.innerHTML = emptyBox(why,
         '이름의 일부만 입력하거나(초성 검색 가능), 필터를 초기화한 뒤 다시 찾아보세요.');
@@ -233,8 +325,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (countEl) {
-      var parts = ['전체 ' + state.divisions.length + '개 부문 중 ' + rendered.length + '개 표시'];
-      if (query) parts.push('검색 일치 부문 ' + hitCount + '개');
+      var parts;
+      if (all) {
+        parts = ['전체 ' + state.divisions.length + '개 부문에서 검색 · 일치 부문 ' + hitCount + '개'];
+      } else {
+        parts = [group + ' ' + rendered.length + '개 부문'];
+        if (query) parts.push('검색 일치 부문 ' + hitCount + '개');
+        parts.push('전체 ' + state.divisions.length + '개 부문');
+      }
       countEl.textContent = parts.join(' · ');
     }
 
@@ -246,6 +344,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!first) return;
     first.classList.add('is-flash');
     setTimeout(function () { first.classList.remove('is-flash'); }, 2600);
+    // 대진도 안에서 가로로도 보이도록 스크롤 영역을 먼저 맞춘다
+    var box = first.closest('.bkt-scroll');
+    if (box) box.scrollLeft = Math.max(0, first.offsetLeft - (box.clientWidth - first.offsetWidth) / 2);
     var top = first.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2) + 80;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }

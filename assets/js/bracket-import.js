@@ -1,6 +1,8 @@
 /* SPYDER BJJ SUPERSERIES — 엑셀 대진 가져오기
- * 엑셀에 "1회전 대진"을 그대로 적어 넣으면(한 행 = 한 경기) 그 배치대로 대진표를 만든다.
- * 8강·4강·결승 등 이후 라운드는 자동으로 이어 붙고, 승자 전파도 그대로 동작한다.
+ * 두 가지 양식을 받는다.
+ *  1) 행 양식: 엑셀에 "1회전 대진"을 그대로 적어 넣으면(한 행 = 한 경기) 그 배치대로 대진표를 만든다.
+ *     8강·4강·결승 등 이후 라운드는 자동으로 이어 붙고, 승자 전파도 그대로 동작한다.
+ *  2) 대진 시트 양식: 시트마다 대진도를 그린 엑셀(예: 스파이더 대진표 10월.xlsx)을 그대로 읽는다.
  */
 (function (global) {
   'use strict';
@@ -449,6 +451,349 @@
     return out;
   }
 
+  /* ---------- 대진 시트 양식 ---------- */
+  // 시트 1개 = 부문 그룹(중등부, 고등부, 어덜트 블루벨트 …)
+  //  - 부문 제목: 가로 3칸 이상 병합된 칸. 예) "중등부 일반 남성 -70kg A조"
+  //  - 선수 칸: 제목과 같은 열에서 세로 3칸 병합. "이름\n소속" / "부전승" / "1경기 패자"
+  //  - 위→아래 칸 순서가 곧 대진 순서 (2·4·8칸 토너먼트, 5칸·10칸 블록)
+  //  - "…결승전" 제목과 "A조 우승자" 칸은 조 결승 안내용이라 사이트가 자동으로 만든다.
+  //  - "게임수 N" 표기는 경기 수 검증에 사용한다.
+
+  var SHEET_TITLE_RE = /kg|앱솔루트|결승/i;
+  var POOL_WINNER_RE = /^([A-Z])조우승자$/i;
+  var LOSER_RE = /^(\d+)경기패자$/;
+  var AGE_WORDS = ['키즈', '유소년', '초등부', '중등부', '고등부', '어덜트', '노기', '마스터'];
+
+  function cleanText(v) {
+    return String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  }
+
+  function cellText(ws, addr) {
+    var c = ws[addr];
+    if (!c) return '';
+    return String(c.v != null ? c.v : (c.w || ''));
+  }
+
+  function splitTitle(raw) {
+    var title = cleanText(raw).replace(/남자/g, '남성').replace(/여자/g, '여성');
+    var isFinal = /결승전?$/.test(title);
+    var base = title.replace(/\s*결승전?$/, '');
+    var pool = '';
+    var pm = /\s([A-Z])\s*조$/i.exec(base);
+    if (pm) {
+      pool = pm[1].toUpperCase();
+      base = base.slice(0, pm.index);
+    }
+    return { title: title, base: cleanText(base), pool: pool, isFinal: isFinal };
+  }
+
+  // "마스터 1 블루벨트 남성 -70kg" → 연령부 / 등급 / 성별 / 체급
+  function divisionFields(base, sheetName) {
+    var tokens = base.split(' ').filter(Boolean);
+    var f = { group: cleanText(sheetName), age: '', gender: '', grade: '', weight: '' };
+    var last = tokens[tokens.length - 1] || '';
+    if (/^[+-]?\d+(\.\d+)?kg$/i.test(last) || /앱솔루트/.test(last)) {
+      f.weight = last;
+      tokens.pop();
+    }
+    if (AGE_WORDS.indexOf(tokens[0]) !== -1) {
+      f.age = tokens.shift();
+      if (f.age === '마스터' && /^\d+$/.test(tokens[0] || '')) f.age += ' ' + tokens.shift();
+    }
+    var rest = tokens.filter(function (t) {
+      if (t === '남성' || t === '여성') { f.gender = t; return false; }
+      return true;
+    });
+    if (f.age) f.grade = rest.join(' ');
+    else f.age = f.group;
+    return f;
+  }
+
+  function parseSlotText(raw) {
+    var text = String(raw == null ? '' : raw).replace(/\r/g, '');
+    var flat = cleanText(text);
+    if (!flat) return { kind: 'empty' };
+    var compact = flat.replace(/\s/g, '');
+    if (isByeWord(flat)) return { kind: 'bye' };
+    var lm = LOSER_RE.exec(compact);
+    if (lm) return { kind: 'loser', k: Number(lm[1]) };
+    var pw = POOL_WINNER_RE.exec(compact);
+    if (pw) return { kind: 'poolWinner', pool: pw[1].toUpperCase() };
+    var lines = text.split('\n').map(cleanText).filter(Boolean);
+    return { kind: 'player', name: lines[0], team: lines.slice(1).join(' ') };
+  }
+
+  // 워크북이 대진 시트 양식인지 (부문 제목 병합 칸이 있는 시트가 하나라도 있는지)
+  function looksLikeSheetWorkbook(XLSX, wb) {
+    return wb.SheetNames.some(function (name) {
+      var ws = wb.Sheets[name];
+      return (ws['!merges'] || []).some(function (m) {
+        return m.e.c - m.s.c >= 2 && SHEET_TITLE_RE.test(cellText(ws, XLSX.utils.encode_cell(m.s)));
+      });
+    });
+  }
+
+  function parseSheetWorkbook(XLSX, wb, settings) {
+    var s = B.mergeSettings(settings);
+    s.defaultDuration = null; // 양식에 경기시간이 없으므로 비워 두고, 필요하면 관리자 [04]에서 입력
+    var errors = [];
+    var warnings = [];
+    var groups = {};
+    var groupOrder = [];
+    var sheetInfo = [];
+
+    function warn(where, column, value, reason, fix) {
+      warnings.push({ where: where, column: column, value: value, reason: reason, fix: fix });
+    }
+    function fail(where, column, value, reason, fix) {
+      errors.push({ where: where, column: column, value: value, reason: reason, fix: fix });
+    }
+
+    wb.SheetNames.forEach(function (sheetName, sheetIdx) {
+      var ws = wb.Sheets[sheetName];
+      if (!ws) return;
+      var merges = ws['!merges'] || [];
+      var anchors = {};
+      var titles = [];
+      var boxes = [];
+
+      merges.forEach(function (m) {
+        var addr = XLSX.utils.encode_cell(m.s);
+        anchors[addr] = true;
+        var text = cellText(ws, addr);
+        if (m.e.c - m.s.c >= 2 && SHEET_TITLE_RE.test(text) && !/^\s*게임수/.test(text)) {
+          titles.push({ r: m.s.r, c: m.s.c, r2: m.e.r, addr: addr, text: text, slots: [], empty: 0 });
+        } else if (m.e.c === m.s.c && m.e.r - m.s.r === 2) {
+          boxes.push({ r: m.s.r, c: m.s.c, addr: addr, text: text });
+        }
+      });
+      if (!titles.length) return; // 작업용 시트 등은 건너뜀
+
+      var declared = null;
+      Object.keys(ws).forEach(function (k) {
+        if (k.charAt(0) === '!') return;
+        var v = ws[k] && ws[k].v;
+        if (typeof v !== 'string') return;
+        var gm = /^\s*게임수\s*(\d+)/.exec(v);
+        if (gm) declared = Number(gm[1]);
+        // 병합되지 않은 "이름\n소속" 칸도 선수 칸으로 인정
+        else if (!anchors[k] && v.indexOf('\n') !== -1 && v.trim()) {
+          var rc = XLSX.utils.decode_cell(k);
+          boxes.push({ r: rc.r, c: rc.c, addr: k, text: v });
+        }
+      });
+
+      boxes.forEach(function (b) {
+        var owner = null;
+        titles.forEach(function (t) {
+          if (t.c === b.c && t.r2 < b.r && (!owner || t.r > owner.r)) owner = t;
+        });
+        if (!owner) return;
+        var p = parseSlotText(b.text);
+        if (p.kind === 'empty') { owner.empty++; return; }
+        p.r = b.r;
+        p.addr = b.addr;
+        owner.slots.push(p);
+      });
+
+      titles.sort(function (a, b) { return a.r - b.r || a.c - b.c; });
+      sheetInfo.push({ name: sheetName, order: sheetIdx, declared: declared, divisions: 0, players: 0, matches: 0 });
+
+      titles.forEach(function (t, ti) {
+        var where = sheetName + ' ' + t.addr;
+        var info = splitTitle(t.text);
+        t.slots.sort(function (a, b) { return a.r - b.r; });
+        var real = t.slots.filter(function (x) { return x.kind !== 'poolWinner'; });
+
+        if (info.isFinal) {
+          if (real.length) warn(where, '부문 제목', info.title, '결승 제목 아래의 선수 칸은 읽지 않았습니다.', 'A·B조 결승은 조 우승자로 자동 구성됩니다.');
+          return;
+        }
+        if (t.slots.length && !real.length) return; // "A조 우승자" 칸만 있는 조 결승 안내
+
+        var key = sheetName + '|' + info.base.replace(/\s/g, '');
+        var g = groups[key];
+        if (!g) {
+          g = groups[key] = {
+            sheet: sheetName, sheetIdx: sheetIdx, firstPos: ti, base: info.base, addr: t.addr,
+            fields: divisionFields(info.base, sheetName), pools: {}, poolOrder: [], pendingSlots: 0
+          };
+          groupOrder.push(key);
+        }
+
+        if (!real.length) {
+          if (t.empty >= 2) g.pendingSlots = Math.max(g.pendingSlots, t.empty);
+          else warn(where, '부문 제목', info.title, '제목 아래에서 선수 칸을 찾지 못했습니다.', '선수 칸이 제목과 같은 열에 세로 3칸 병합으로 들어 있는지 확인하세요.');
+          return;
+        }
+
+        var poolName = info.pool || 'A';
+        if (g.pools[poolName]) {
+          fail(where, '부문 제목', info.title, '같은 부문·조 제목이 두 번 있습니다.', '조 이름(A조·B조)을 확인하세요.');
+          return;
+        }
+        g.pools[poolName] = { name: poolName, slots: real, addr: t.addr };
+        g.poolOrder.push(poolName);
+      });
+    });
+
+    if (!groupOrder.length) {
+      return {
+        kind: 'sheet', ok: false, warnings: [], summary: null, state: null, sheets: [],
+        errors: [{ where: '-', column: '-', value: '', reason: '대진 시트 양식에서 부문 제목을 찾지 못했습니다.', fix: '부문 제목(예: "중등부 일반 남성 -70kg")이 가로로 병합된 칸에 있는지 확인하세요.' }]
+      };
+    }
+
+    var divisions = groupOrder.map(function (key, gi) {
+      var g = groups[key];
+      var divId = 'x' + (gi + 1) + '-' + B.slugify(g.base).slice(0, 40);
+      var entrySeq = 0;
+
+      var pools = g.poolOrder.slice().sort().map(function (poolName) {
+        var p = g.pools[poolName];
+        var entries = [];
+        var byKey = {};
+        var slots = p.slots.map(function (x) {
+          var where = g.sheet + ' ' + x.addr;
+          if (x.kind === 'bye') return { bye: true };
+          if (x.kind === 'loser') return { loserOf: x.k };
+          if (x.kind === 'poolWinner') {
+            warn(where, '선수 칸', x.pool + '조 우승자', '조 결승 안내 칸이 일반 대진에 섞여 있어 부전승으로 처리했습니다.', '조 결승은 자동 구성되므로 칸을 지워 주세요.');
+            return { bye: true };
+          }
+          var k = x.name + '|' + x.team;
+          if (byKey[k]) {
+            warn(where, '선수 칸', x.name, '같은 조에 이미 있는 선수입니다(' + byKey[k].addr + ').', '중복 칸이면 한쪽을 부전승으로 바꿔 주세요.');
+          } else {
+            entrySeq++;
+            byKey[k] = { id: divId + '-e' + entrySeq, name: x.name, team: x.team, seed: 0, addr: x.addr };
+            entries.push(byKey[k]);
+          }
+          return { entryId: byKey[k].id };
+        });
+
+        var built = B.buildSheetMatches(divId, poolName, slots, s);
+        built.errors.forEach(function (msg) {
+          fail(g.sheet + ' ' + p.addr, '선수 칸', '', msg, '"N경기 패자" 칸의 번호를 확인하세요.');
+        });
+        if (built.padded) {
+          warn(g.sheet + ' ' + p.addr, '선수 칸', slots.length + '칸',
+            '양식에 없는 칸 수라 빈 자리 ' + built.padded + '개를 부전승으로 채웠습니다.',
+            '2·4·5·8·10·16칸 중 하나로 맞추면 엑셀과 같은 모양이 됩니다.');
+        }
+        return {
+          name: poolName,
+          entries: entries.map(function (e) { return { id: e.id, name: e.name, team: e.team, seed: 0 }; }),
+          matches: entries.length > 1 ? built.matches : []
+        };
+      });
+
+      // 조가 여러 개면 각 조의 마지막 경기는 "조 결승"(우승자가 최종 결승 진출)
+      if (pools.length > 1) {
+        pools.forEach(function (p) {
+          if (p.matches.length) p.matches[p.matches.length - 1].label = '조 결승';
+        });
+      }
+
+      var f = g.fields;
+      var division = {
+        id: divId,
+        group: f.group, age: f.age, gender: f.gender, grade: f.grade, weight: f.weight,
+        title: g.base,
+        duration: null,
+        mat: null,
+        pools: pools,
+        finals: B.buildFinals(divId, pools, s),
+        thirdPlace: null,
+        thirdPlaceRule: 'shared',
+        conflicts: [],
+        entryCount: pools.reduce(function (acc, p) { return acc + p.entries.length; }, 0),
+        source: 'sheet',
+        sheet: g.sheet,
+        cell: g.addr
+      };
+      if (!pools.length) {
+        division.pending = true;
+        division.pendingSlots = g.pendingSlots;
+        division.pools = [{ name: 'A', entries: [], matches: [] }];
+      }
+      division._order = [g.sheetIdx, g.firstPos];
+      return division;
+    });
+
+    // 정렬: 시트 순서 → 등급(시트에 처음 나온 순서) → 성별 → 연령부 → 체급
+    var gradeFirst = {};
+    divisions.forEach(function (d) {
+      var k = d.sheet + '|' + d.grade;
+      if (gradeFirst[k] == null || d._order[1] < gradeFirst[k]) gradeFirst[k] = d._order[1];
+    });
+    function genderRank(gd) { return gd === '남성' ? 0 : (gd === '여성' ? 1 : 2); }
+    function ageRank(a) { var m = /(\d+)$/.exec(a || ''); return m ? Number(m[1]) : 99; }
+    divisions.sort(function (a, b) {
+      return (a._order[0] - b._order[0]) ||
+        (gradeFirst[a.sheet + '|' + a.grade] - gradeFirst[b.sheet + '|' + b.grade]) ||
+        (genderRank(a.gender) - genderRank(b.gender)) ||
+        (ageRank(a.age) - ageRank(b.age)) ||
+        B.compareWeight(a.weight, b.weight) ||
+        (a._order[1] - b._order[1]);
+    });
+    divisions.forEach(function (d) { delete d._order; });
+
+    var state = { settings: B.mergeSettings(settings), divisions: divisions, generatedAt: new Date().toISOString() };
+    var byId = B.indexMatches(state);
+
+    // 같은 선수가 한 시트의 체급 부문 2곳 이상에 들어 있으면 경고(앱솔루트 제외)
+    var seen = {};
+    divisions.forEach(function (d) {
+      if (/앱솔루트/.test(d.weight)) return;
+      d.pools.forEach(function (p) {
+        p.entries.forEach(function (e) {
+          var k = d.sheet + '|' + e.name + '|' + String(e.team).replace(/\s/g, '');
+          (seen[k] = seen[k] || []).push(d.title);
+        });
+      });
+    });
+    Object.keys(seen).forEach(function (k) {
+      var titles = seen[k].filter(function (t, i, arr) { return arr.indexOf(t) === i; });
+      if (titles.length < 2) return;
+      var parts = k.split('|');
+      warn(parts[0], '선수', parts[1], '체급 부문 ' + titles.length + '곳에 배정되어 있습니다: ' + titles.join(' / '), '의도한 배정인지 확인하세요.');
+    });
+
+    // 시트별 집계 + 엑셀 "게임수"와 비교
+    var players = 0;
+    var realMatches = 0;
+    divisions.forEach(function (d) {
+      var info = sheetInfo.filter(function (x) { return x.name === d.sheet; })[0];
+      var n = B.allMatches(d).filter(function (m) { return !B.isSkippedMatch(m, byId); }).length;
+      info.divisions++;
+      info.players += d.entryCount;
+      info.matches += n;
+      players += d.entryCount;
+      realMatches += n;
+    });
+    sheetInfo.forEach(function (x) {
+      if (x.declared != null && x.declared !== x.matches) {
+        warn(x.name, '게임수', '엑셀 ' + x.declared + '경기',
+          '대진에서 계산한 실제 경기 수는 ' + x.matches + '경기입니다.',
+          '부전승·선수 칸을 확인하세요. 엑셀의 게임수 표기 오류일 수도 있습니다.');
+      }
+    });
+
+    var summary = {
+      kind: 'sheet',
+      sheets: sheetInfo.length,
+      divisions: divisions.length,
+      pending: divisions.filter(function (d) { return d.pending; }).length,
+      players: players,
+      matches: realMatches,
+      errors: errors.length,
+      warnings: warnings.length
+    };
+
+    return { kind: 'sheet', ok: errors.length === 0, errors: errors, warnings: warnings, summary: summary, state: state, sheets: sheetInfo };
+  }
+
   /* ---------- 양식 워크북 생성 ---------- */
 
   function buildTemplateWorkbook(XLSX) {
@@ -472,6 +817,8 @@
     GUIDE_ROWS: GUIDE_ROWS,
     parse: parse,
     parseText: parseText,
+    looksLikeSheetWorkbook: looksLikeSheetWorkbook,
+    parseSheetWorkbook: parseSheetWorkbook,
     buildTemplateWorkbook: buildTemplateWorkbook,
     headerLine: function () { return COLUMNS.map(function (c) { return c.label; }).join(' | '); }
   };

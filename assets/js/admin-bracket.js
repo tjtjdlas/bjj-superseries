@@ -203,12 +203,19 @@
     XLSX.writeFile(IMP.buildTemplateWorkbook(XLSX), '대진표_업로드_양식.xlsx');
   }
 
+  // 행 양식은 "N행", 대진 시트 양식은 "시트 셀" 위치를 보여 준다
+  function issuePlace(e) {
+    if (e.where) return e.where;
+    return e.row ? e.row + '행' : '-';
+  }
+
   function issueTable(list, kind) {
     if (!list.length) return '';
     var shown = list.slice(0, 200);
+    var bySheet = list.some(function (e) { return e.where; });
     var rows = shown.map(function (e) {
       return '<tr>' +
-        '<td class="c-row">' + (e.row ? e.row + '행' : '-') + '</td>' +
+        '<td class="c-row">' + esc(issuePlace(e)) + '</td>' +
         '<td class="c-col">' + esc(e.column) + '</td>' +
         '<td>' + esc(e.value || '(비어 있음)') + '</td>' +
         '<td>' + esc(e.reason) + '</td>' +
@@ -220,8 +227,61 @@
         (list.length > shown.length ? ' (상위 ' + shown.length + '건 표시)' : '') +
       '</div>' +
       '<div class="issue-wrap"><table class="issue-table">' +
-        '<thead><tr><th>행</th><th>열</th><th>입력값</th><th>사유</th><th>해결 방법</th></tr></thead>' +
+        '<thead><tr><th>' + (bySheet ? '위치' : '행') + '</th><th>' + (bySheet ? '항목' : '열') + '</th><th>입력값</th><th>사유</th><th>해결 방법</th></tr></thead>' +
         '<tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function statBoxes(list) {
+    return '<div class="import-summary">' + list.map(function (x) {
+      return '<div class="import-stat ' + (x.c || '') + '"><b>' + x.n + '</b><span>' + x.l + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  // 대진 시트 양식(시트별 대진도 엑셀) 검증 결과
+  function renderSheetImportResult(res, box, applyBtn, errBtn) {
+    var s = res.summary;
+    if (!s) {
+      box.innerHTML = issueTable(res.errors, 'err');
+      if (applyBtn) applyBtn.disabled = true;
+      if (errBtn) errBtn.disabled = !res.errors.length;
+      return;
+    }
+    var sheetRows = (res.sheets || []).map(function (x) {
+      var same = x.declared == null || x.declared === x.matches;
+      return '<tr>' +
+        '<td class="c-col">' + esc(x.name) + '</td>' +
+        '<td>' + x.divisions + '</td>' +
+        '<td>' + x.players + '</td>' +
+        '<td>' + x.matches + '</td>' +
+        '<td>' + (x.declared == null ? '-' : x.declared) + '</td>' +
+        '<td>' + (same ? '<span style="color:#6ee7a8;">일치</span>' : '<span style="color:var(--gold);">확인 필요</span>') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    box.innerHTML =
+      '<p class="admin-note" style="margin-top:18px;"><b>대진 시트 양식</b>으로 인식했습니다. 시트마다 그려진 대진을 그대로 읽어, 사이트에서 같은 모양의 대진표로 만듭니다.</p>' +
+      statBoxes([
+        { n: s.sheets, l: '시트' },
+        { n: s.divisions, l: '부문', c: s.divisions ? 'is-ok' : '' },
+        { n: s.players, l: '선수(연인원)' },
+        { n: s.matches, l: '실제 경기' },
+        { n: s.pending, l: '선수 공개 전 부문' },
+        { n: s.warnings, l: '경고', c: s.warnings ? 'is-warn' : '' },
+        { n: s.errors, l: '오류', c: s.errors ? 'is-err' : '' }
+      ]) +
+      '<div class="issue-wrap"><table class="issue-table">' +
+        '<thead><tr><th>시트</th><th>부문</th><th>선수</th><th>실제 경기</th><th>엑셀 게임수</th><th>경기 수</th></tr></thead>' +
+        '<tbody>' + sheetRows + '</tbody></table></div>' +
+      issueTable(res.errors, 'err') +
+      issueTable(res.warnings, 'warn') +
+      (s.divisions
+        ? '<p class="admin-note">아래 <b>[검증 결과 초안에 반영]</b>을 누르면 부문 ' + s.divisions + '개가 초안에 반영됩니다. ' +
+          '경기번호·매트·시각은 엑셀에 없으므로 비워 둡니다(필요하면 [04]에서 입력하거나 [03]의 "경기번호·시간만 다시 계산"을 사용). ' +
+          '게시 전까지 공개 화면에는 영향이 없습니다.</p>'
+        : '<p class="admin-note">반영할 수 있는 부문이 없습니다.</p>');
+
+    if (applyBtn) applyBtn.disabled = !s.divisions;
+    if (errBtn) errBtn.disabled = !res.errors.length;
   }
 
   function renderImportResult(res) {
@@ -231,6 +291,11 @@
     var applyBtn = $('#importApplyBtn');
     var errBtn = $('#importErrorXlsxBtn');
 
+    if (res.kind === 'sheet') {
+      renderSheetImportResult(res, box, applyBtn, errBtn);
+      return;
+    }
+
     if (!s) {
       box.innerHTML = issueTable(res.errors, 'err');
       if (applyBtn) applyBtn.disabled = true;
@@ -238,7 +303,7 @@
       return;
     }
 
-    var stats = [
+    var stats = statBoxes([
       { n: s.total, l: '전체 행' },
       { n: s.valid, l: '유효 행', c: s.valid ? 'is-ok' : '' },
       { n: s.invalid, l: '오류 행', c: s.invalid ? 'is-err' : '' },
@@ -246,11 +311,9 @@
       { n: s.divisions, l: '부문' },
       { n: s.players, l: '선수' },
       { n: s.matches, l: '실제 경기' }
-    ].map(function (x) {
-      return '<div class="import-stat ' + (x.c || '') + '"><b>' + x.n + '</b><span>' + x.l + '</span></div>';
-    }).join('');
+    ]);
 
-    box.innerHTML = '<div class="import-summary">' + stats + '</div>' +
+    box.innerHTML = stats +
       issueTable(res.errors, 'err') +
       issueTable(res.warnings, 'warn') +
       (s.valid
@@ -279,8 +342,14 @@
     reader.onload = function (e) {
       try {
         var wb = XLSX.read(e.target.result, { type: 'array', cellDates: false });
-        // "대진" 시트를 우선 사용하고, 없으면 첫 시트
-        var sheetName = wb.SheetNames.filter(function (n) { return n.replace(/\s/g, '') === '대진'; })[0] || wb.SheetNames[0];
+        // "대진" 시트가 있으면 행 양식, 없고 시트마다 대진도가 그려져 있으면 대진 시트 양식
+        var rowSheet = wb.SheetNames.filter(function (n) { return n.replace(/\s/g, '') === '대진'; })[0];
+        if (!rowSheet && IMP.looksLikeSheetWorkbook(XLSX, wb)) {
+          lastImport = IMP.parseSheetWorkbook(XLSX, wb, draft.settings);
+          renderImportResult(lastImport);
+          return;
+        }
+        var sheetName = rowSheet || wb.SheetNames[0];
         var rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: false });
         runImport(rows);
       } catch (err) {
@@ -312,19 +381,25 @@
       draft.divisions = draft.divisions.filter(function (d) { return !titles[d.title]; }).concat(incoming);
     }
 
-    B.scheduleAll(draft);
-    // 엑셀에 적힌 경기번호·매트·시각은 가져오기 시점 값이 우선
-    var byIdNew = B.indexMatches(draft);
-    incoming.forEach(function (src) {
-      B.allMatches(src).forEach(function (sm) {
-        var m = byIdNew[sm.id];
-        if (!m || B.isSkippedMatch(m, byIdNew)) return;
-        if (sm.no) m.no = sm.no;
-        if (sm.mat) m.mat = sm.mat;
-        if (sm.time) m.time = sm.time;
-        if (sm.duration) m.duration = sm.duration;
+    var byIdNew;
+    if (lastImport.kind === 'sheet') {
+      // 대진 시트 양식에는 경기번호·매트·시각이 없다. 임의 번호가 공개되지 않도록 자동 배정하지 않는다.
+      byIdNew = B.indexMatches(draft);
+    } else {
+      B.scheduleAll(draft);
+      // 엑셀에 적힌 경기번호·매트·시각은 가져오기 시점 값이 우선
+      byIdNew = B.indexMatches(draft);
+      incoming.forEach(function (src) {
+        B.allMatches(src).forEach(function (sm) {
+          var m = byIdNew[sm.id];
+          if (!m || B.isSkippedMatch(m, byIdNew)) return;
+          if (sm.no) m.no = sm.no;
+          if (sm.mat) m.mat = sm.mat;
+          if (sm.time) m.time = sm.time;
+          if (sm.duration) m.duration = sm.duration;
+        });
       });
-    });
+    }
 
     byId = byIdNew;
     currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
@@ -339,9 +414,9 @@
   function exportErrorRows() {
     if (!lastImport || !lastImport.errors.length) return;
     if (typeof XLSX === 'undefined') { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
-    var rows = [['행', '열', '입력값', '사유', '해결 방법']].concat(
+    var rows = [['위치', '항목', '입력값', '사유', '해결 방법']].concat(
       lastImport.errors.map(function (e) {
-        return [e.row, e.column, e.value, e.reason, e.fix].map(safeCell);
+        return [issuePlace(e), e.column, e.value, e.reason, e.fix].map(safeCell);
       })
     );
     var wb = XLSX.utils.book_new();

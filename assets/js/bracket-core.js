@@ -200,6 +200,21 @@
     return entry ? { entryId: entry.id } : { bye: true };
   }
 
+  function makeMatch(divId, poolName, round, order, slots, settings, label) {
+    return {
+      id: divId + '-' + poolName + '-r' + round + '-' + order,
+      pool: poolName,
+      round: round,
+      order: order,
+      label: label || '',
+      slots: slots,
+      no: null, mat: null, time: null,
+      duration: settings.defaultDuration,
+      winner: null, s1: '', s2: '', method: '', note: '',
+      status: '예정'
+    };
+  }
+
   // 이미 정해진 슬롯 배열(길이 = 2의 거듭제곱)로 토너먼트 트리를 만든다.
   // 자동 생성과 엑셀 대진 가져오기가 이 함수를 공유한다.
   function buildBracketMatches(divId, poolName, slots, settings, finalLabel) {
@@ -214,27 +229,93 @@
       var count = size / Math.pow(2, r + 1);
       var ids = [];
       for (var i = 0; i < count; i++) {
-        var id = divId + '-' + poolName + '-r' + r + '-' + i;
         var pair = (r === 0)
           ? [slots[i * 2], slots[i * 2 + 1]]
           : [{ from: prevIds[i * 2] }, { from: prevIds[i * 2 + 1] }];
-        matches.push({
-          id: id,
-          pool: poolName,
-          round: r,
-          order: i,
-          label: (count === 1 && finalLabel) ? finalLabel : roundLabel(count),
-          slots: pair,
-          no: null, mat: null, time: null,
-          duration: settings.defaultDuration,
-          winner: null, s1: '', s2: '', method: '', note: '',
-          status: '예정'
-        });
-        ids.push(id);
+        var m = makeMatch(divId, poolName, r, i, pair, settings,
+          (count === 1 && finalLabel) ? finalLabel : roundLabel(count));
+        matches.push(m);
+        ids.push(m.id);
       }
       prevIds = ids;
     }
     return matches;
+  }
+
+  /* ---------------- 엑셀 대진 시트 양식 ---------------- */
+
+  // 5명 블록: 1·2번 / 3·4번 경기 → (3·4번 승자 vs 5번) → 블록 결승
+  function buildFiveBlock(divId, poolName, s, block, settings) {
+    var m1 = makeMatch(divId, poolName, 0, block * 2, [s[0], s[1]], settings);
+    var m2 = makeMatch(divId, poolName, 0, block * 2 + 1, [s[2], s[3]], settings);
+    var m3 = makeMatch(divId, poolName, 1, block, [{ from: m2.id }, s[4]], settings);
+    var top = makeMatch(divId, poolName, 2, block, [{ from: m1.id }, { from: m3.id }], settings);
+    return [m1, m2, m3, top];
+  }
+
+  // 엑셀 "대진 시트"(선수 칸을 위→아래로 그린 양식)의 칸 배열로 대진을 만든다.
+  //   2·4·8·16칸: 일반 토너먼트 (빈 칸 없이 '부전승'으로 채워진 형태)
+  //   5칸: 1·2번, 3·4번 경기 → 3·4번 승자 vs 5번 → 결승
+  //   10칸: 5칸 블록 2개 → 블록 승자끼리 결승
+  //   "N경기 패자" 칸({ loserOf: N }): N번째 경기의 패자가 그 자리로 들어온다 (3인 부문)
+  // 그 밖의 칸 수는 다음 2의 거듭제곱까지 부전승으로 채운다(padded 로 개수 반환).
+  function buildSheetMatches(divId, poolName, slots, settings) {
+    var n = slots.length;
+    var result = { matches: [], padded: 0, errors: [] };
+    if (n < 2) return result;
+
+    var hasLoser = slots.some(function (s) { return s && s.loserOf; });
+    var matches;
+    var template = 'standard';
+
+    if (n === 5) {
+      template = 'five';
+      matches = buildFiveBlock(divId, poolName, slots, 0, settings);
+    } else if (n === 10) {
+      template = 'ten';
+      var a = buildFiveBlock(divId, poolName, slots.slice(0, 5), 0, settings);
+      var b = buildFiveBlock(divId, poolName, slots.slice(5), 1, settings);
+      matches = a.concat(b);
+      matches.push(makeMatch(divId, poolName, 3, 0, [{ from: a[3].id }, { from: b[3].id }], settings));
+    } else {
+      var size = nextPow2(n);
+      var padded = slots.slice();
+      while (padded.length < size) padded.push({ bye: true });
+      result.padded = size - n;
+      matches = buildBracketMatches(divId, poolName, padded, settings);
+    }
+
+    // 진행 순서(라운드 → 위에서 아래)대로 정렬해 "N경기" 번호를 매긴다.
+    var seq = matches.slice().sort(function (x, y) {
+      return x.round !== y.round ? x.round - y.round : x.order - y.order;
+    });
+    var final = seq[seq.length - 1];
+
+    if (template !== 'standard' || hasLoser) {
+      var no = 0;
+      seq.forEach(function (m) {
+        if (m === final) m.label = '결승';
+        else if (template === 'ten' && m.round === 2) m.label = '준결승';
+        else m.label = (++no) + '경기';
+      });
+    }
+
+    // "N경기 패자" → 해당 경기 패자 연결
+    seq.forEach(function (m, idx) {
+      m.slots = m.slots.map(function (s) {
+        if (!s || !s.loserOf) return s;
+        var k = Number(s.loserOf);
+        var src = seq[k - 1];
+        if (!src || k - 1 >= idx) {
+          result.errors.push(k + '경기 패자 칸이 가리키는 경기가 없거나 이후 경기입니다.');
+          return { bye: true };
+        }
+        return { from: src.id, loser: true };
+      });
+    });
+
+    result.matches = matches;
+    return result;
   }
 
   function buildPoolMatches(divId, poolName, entries, settings, rnd, conflicts) {
@@ -452,7 +533,10 @@
         var srcOcc = resolveSlots(src, byId, depth + 1);
         var allBye = srcOcc.every(function (o) { return o.kind === 'bye'; });
         if (allBye) return { kind: 'bye' };
-        return { kind: 'tbd', fromLabel: (src.label || '') + (src.no ? ' #' + src.no : '') + ' 승자' };
+        var fromLabel;
+        if (!s.loser && src.pool !== match.pool && src.pool !== 'F') fromLabel = src.pool + '조 우승자';
+        else fromLabel = (src.label || '') + (src.no ? ' #' + src.no : '') + (s.loser ? ' 패자' : ' 승자');
+        return { kind: 'tbd', fromLabel: fromLabel };
       }
       return { kind: 'tbd' };
     });
@@ -482,13 +566,33 @@
       var t = winnerOf(division.thirdPlace, byId);
       if (t) thirds.push(t);
     } else {
-      var semis = bracketMatches.filter(function (m) { return m.round === finalMatch.round - 1; });
-      semis.forEach(function (m) {
-        var l = loserOf(m, byId);
+      // 결승에 선수를 올려 보낸 경기의 패자 = 공동 3위.
+      // 패자가 다른 경기로 이어지는 경기(예: 3인 부문의 1경기)는 제외한다.
+      var consumed = {};
+      allMatches(division).forEach(function (m) {
+        (m.slots || []).forEach(function (s) { if (s.from && s.loser) consumed[s.from] = true; });
+      });
+      (finalMatch.slots || []).forEach(function (s) {
+        if (!s.from || s.loser || consumed[s.from]) return;
+        var l = loserOf(byId[s.from], byId);
         if (l) thirds.push(l);
       });
     }
     return { first: first, second: second, thirds: thirds };
+  }
+
+  // 체급 정렬: -49kg < -54kg … < +84kg < 앱솔루트(무제한)
+  function weightRank(w) {
+    var s = String(w || '').replace(/\s/g, '');
+    var m = /^([+-]?)(\d+(?:\.\d+)?)kg$/i.exec(s);
+    if (m) return Number(m[2]) * 2 + (m[1] === '+' ? 1 : 0);
+    if (/앱솔루트|absolute|무제한/i.test(s)) return 1e6;
+    return 1e5;
+  }
+
+  function compareWeight(a, b) {
+    var d = weightRank(a) - weightRank(b);
+    return d !== 0 ? d : String(a || '').localeCompare(String(b || ''), 'ko', { numeric: true });
   }
 
   /* ---------------- 상태 생성 ---------------- */
@@ -535,6 +639,8 @@
     generate: generate,
     nextPow2: nextPow2,
     buildBracketMatches: buildBracketMatches,
+    buildSheetMatches: buildSheetMatches,
+    compareWeight: compareWeight,
     buildFinals: buildFinals,
     attachThirdPlace: attachThirdPlace,
     emptyState: emptyState,

@@ -12,7 +12,7 @@
 <meta property="og:image" content="assets/img/poster-main.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="assets/css/style.css?v=79">
-<link rel="stylesheet" href="assets/css/bracket.css?v=2">
+<link rel="stylesheet" href="assets/css/bracket.css?v=3">
 </head>
 <body>
 
@@ -43,12 +43,13 @@
   <div class="container">
     <div class="section-head section-head-center section-head-band bkt-print-hide">
       <h2 class="section-title display reveal-text" style="font-size:clamp(26px,4vw,36px);">대진표</h2>
-      <p class="section-desc reveal" style="transition-delay:.15s;">연령·성별·등급·체급 필터와 이름 검색으로 내 대진만 골라 볼 수 있습니다. 각 경기 카드에 경기번호와 매트가 표시됩니다.</p>
+      <p class="section-desc reveal" style="transition-delay:.15s;">부문 탭에서 등급·성별·체급을 고르거나, 이름·소속팀을 검색해 내 대진을 바로 찾을 수 있습니다.</p>
     </div>
 
-    <!-- 필터 & 검색 -->
+    <!-- 부문 탭 · 필터 & 검색 -->
     <div class="bkt-toolbar bkt-print-hide">
       <div class="container" style="padding:0;">
+        <div class="bkt-tabs" id="bracketTabs" role="tablist" aria-label="부문 그룹" hidden></div>
         <div class="bkt-search-wrap">
           <input type="text" id="bracketSearch" placeholder="선수 이름 또는 소속팀 검색 (초성 검색 가능)" disabled aria-label="선수 이름 또는 소속팀 검색">
           <button type="button" class="bkt-btn is-on" id="bracketMineBtn" aria-pressed="true" title="검색어와 일치하는 부문만 표시">내 대진만 보기</button>
@@ -64,7 +65,7 @@
     <p class="bkt-count" id="bracketCount"></p>
     <div id="bracketList"></div>
     <p class="roster-updated" id="bracketUpdated"></p>
-    <p class="bkt-note bkt-print-hide">※ 경기 시작 시각은 아직 공개되지 않았습니다. 진행 순서는 현장 매트 안내와 장내 방송을 확인해 주세요.</p>
+    <p class="bkt-note bkt-print-hide">※ 경기 시작 시각·매트는 아직 공개되지 않았습니다. 진행 순서는 현장 매트 안내와 장내 방송을 확인해 주세요.</p>
   </div>
 </section>
 
@@ -89,8 +90,8 @@
 <script src="assets/js/supabase-config.js"></script>
 <script src="assets/js/main.js?v=45"></script>
 <script src="assets/js/footer.js?v=41"></script>
-<script src="assets/js/bracket-core.js?v=1"></script>
-<script src="assets/js/bracket-render.js?v=2"></script>
-<script src="assets/js/brackets.js?v=4"></script>
+<script src="assets/js/bracket-core.js?v=2"></script>
+<script src="assets/js/bracket-render.js?v=3"></script>
+<script src="assets/js/brackets.js?v=5"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>대진표 관리자 | SPYDER BJJ SUPER SERIES</title>
 <link rel="stylesheet" href="assets/css/style.css?v=79">
-<link rel="stylesheet" href="assets/css/bracket.css?v=2">
+<link rel="stylesheet" href="assets/css/bracket.css?v=3">
 <style>
   .admin-wrap{ max-width:1180px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 120px; }
   .admin-bar{
@@ -277,8 +277,10 @@
   <div class="admin-block">
     <h2>[ 03-B ] 엑셀 대진 붙여넣기 · 업로드</h2>
     <p class="desc">
-      엑셀에 <b style="color:var(--white)">1회전 대진을 직접 그려 넣은 뒤</b> 그대로 가져오는 방식입니다.
-      한 행이 한 경기(선수 2명)이고, 위에서부터 적은 순서가 대진도의 위→아래 순서가 됩니다.
+      <b style="color:var(--white)">대진 시트 양식(스파이더 대진표 엑셀)</b>은 그대로 첨부하면 자동으로 인식합니다.
+      시트 1개가 부문 그룹(중등부·고등부·어덜트 …)이 되고, 각 부문 제목 아래 선수 칸(이름/소속, 부전승, "1경기 패자")을 위→아래 순서대로 읽어
+      2·4·5·8·10인 대진과 A·B조 결승을 엑셀과 같은 모양으로 만듭니다. 시트의 "게임수"와 실제 경기 수도 비교해 알려 줍니다.<br>
+      또는 엑셀에 <b style="color:var(--white)">1회전 대진을 행으로 적은 양식</b>(한 행 = 한 경기, 아래 양식 다운로드)도 계속 사용할 수 있습니다.
       8강·4강·결승 등 다음 라운드와 승자 전파는 사이트가 자동으로 이어 만듭니다.
     </p>
     <div class="paste-hint" id="importHint"></div>
@@ -406,9 +408,9 @@
   });
 })();
 </script>
-<script src="assets/js/bracket-core.js?v=1"></script>
-<script src="assets/js/bracket-render.js?v=2"></script>
-<script src="assets/js/bracket-import.js?v=1"></script>
-<script src="assets/js/admin-bracket.js?v=2"></script>
+<script src="assets/js/bracket-core.js?v=2"></script>
+<script src="assets/js/bracket-render.js?v=3"></script>
+<script src="assets/js/bracket-import.js?v=2"></script>
+<script src="assets/js/admin-bracket.js?v=3"></script>
 </body>
 </html>

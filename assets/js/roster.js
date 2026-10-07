@@ -37,28 +37,28 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   }
 
-  async function loadRoster() {
+  // 같은 행(data)에 대진표(bracket/bracketAdmin)도 저장되므로 명단에 필요한 항목만 골라 읽는다.
+  async function loadRoster(quiet) {
     const { data, error } = await sb
       .from('roster_state')
-      .select('data, updated_at')
+      .select('categories:data->categories, athletes:data->athletes, updated_at')
       .eq('id', 1)
       .single();
 
     if (error || !data) {
-      tableBody.innerHTML = '<tr><td style="padding:40px 20px; text-align:center; color:var(--mute-2);">선수 명단을 불러오지 못했습니다.</td></tr>';
+      if (!quiet) tableBody.innerHTML = '<tr><td style="padding:40px 20px; text-align:center; color:var(--mute-2);">선수 명단을 불러오지 못했습니다.</td></tr>';
       return;
     }
-    applyState(data.data);
+    applyState({ categories: data.categories, athletes: data.athletes });
     showUpdatedAt(data.updated_at);
   }
 
-  loadRoster();
+  loadRoster(false);
 
-  // Realtime: any admin update reflects here immediately, no refresh needed
+  // Realtime: 변경 알림만 받고 내용은 다시 조회한다(대진표가 커져도 알림 크기와 무관하게 안전).
   sb.channel('roster_state_public')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'roster_state', filter: 'id=eq.1' }, (payload) => {
-      applyState(payload.new.data);
-      showUpdatedAt(payload.new.updated_at);
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'roster_state', filter: 'id=eq.1' }, () => {
+      loadRoster(true);
     })
     .subscribe();
 

@@ -126,95 +126,94 @@
 .bkt-podium-name{ font-size:13.5px; font-weight:700; color:var(--white); }
 .bkt-podium-team{ font-size:11.5px; color:var(--mute); }
 
-/* 조 탭 */
-.bkt-pool-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
-.bkt-pool-tab{
+/* 부문 그룹 탭 (엑셀 시트: 중등부 / 고등부 / 어덜트 … ) */
+.bkt-tabs{
+  position:relative;
+  display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px;
+  margin-bottom:12px; scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.bkt-tabs[hidden]{ display:none; }
+.bkt-tab{
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:7px;
   background:none; border:1px solid var(--line); border-radius:var(--r-pill);
   color:var(--mute); font-family:var(--font); font-weight:700;
-  font-size:11.5px; letter-spacing:0.6px; padding:9px 16px; line-height:1; cursor:pointer;
+  font-size:12.5px; letter-spacing:0.2px; padding:10px 16px; line-height:1; cursor:pointer;
+  white-space:nowrap;
 }
-.bkt-pool-tab.is-on{ background:var(--white); border-color:var(--white); color:#0b0c10; }
-.bkt-pool-tab:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+.bkt-tab:hover{ color:var(--white); border-color:var(--outline-border); }
+.bkt-tab.is-on{ background:var(--white); border-color:var(--white); color:#0b0c10; }
+.bkt-tab:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+.bkt-tab-count{ font-family:var(--mono); font-size:10.5px; font-weight:500; opacity:0.65; }
+.bkt-tabs.is-muted .bkt-tab.is-on{ background:none; border-color:var(--white); color:var(--white); }
 
-/* ---------- 대진도 ---------- */
+/* 조 / 결승 구분 제목 */
+.bkt-section-label{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--font); font-weight:800; font-size:12.5px; letter-spacing:0.3px;
+  color:var(--white);
+  margin:20px 0 8px;
+}
+.bkt-section-label::after{ content:''; flex:1; height:1px; background:var(--line-2); }
+.bkt-pending{
+  border:1px dashed var(--line); border-radius:var(--r-md);
+  padding:22px; text-align:center; color:var(--mute); font-size:13px;
+}
+
+/* ---------- 대진도 (트리 배치) ----------
+   카드 위치와 연결선은 bracket-render.js 가 칸 단위(--c 열, --y 행)로 넣고,
+   실제 크기는 아래 변수로 정한다. 화면 폭에 따라 변수만 바꾸면 전체가 함께 맞춰진다. */
 .bkt-scroll{
   overflow-x:auto;
   overflow-y:hidden;
-  padding:4px 2px 14px;
+  padding:6px 2px 14px;
   -webkit-overflow-scrolling:touch;
 }
-.bkt-rounds{
-  display:flex;
-  gap:28px;
-  min-width:min-content;
-  align-items:stretch;
-}
-.bkt-round{
-  display:flex;
-  flex-direction:column;
-  min-width:206px;
-  flex:1 0 206px;
-}
-.bkt-round-label{
-  font-family:var(--mono);
-  font-size:10.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
-  color:var(--mute-2);
-  text-align:center;
-  padding-bottom:12px;
-  margin-bottom:4px;
-  border-bottom:1px solid var(--line-2);
-}
-.bkt-round-body{ display:flex; flex-direction:column; flex:1; }
-.bkt-cell{
-  flex:1;
-  display:flex;
-  align-items:center;
+.bkt-tree{
+  --cw:224px;   /* 카드 너비 */
+  --gx:40px;    /* 열 간격 */
+  --hh:26px;    /* 카드 머리 높이 */
+  --sh:44px;    /* 선수 칸 높이 */
+  --uh:124px;   /* 한 칸(경기 1개) 높이 */
   position:relative;
-  min-height:86px;
-  padding:5px 0;
+  width:calc(var(--cols) * (var(--cw) + var(--gx)) - var(--gx));
+  height:calc(var(--rows) * var(--uh));
+}
+.bkt-tree .bkt-match{
+  position:absolute;
+  left:calc(var(--c) * (var(--cw) + var(--gx)));
+  top:calc(var(--y) * var(--uh) + (var(--uh) - var(--hh) - 2 * var(--sh)) / 2);
+  width:var(--cw);
+  height:calc(var(--hh) + 2 * var(--sh));
 }
 
 /* 연결선 */
-.bkt-round:not(:first-child) .bkt-cell::before{
-  content:'';
+.bkt-link{
   position:absolute;
-  left:-14px; top:25%;
-  width:1px; height:50%;
-  background:var(--line);
+  box-sizing:content-box;
+  border:0 solid var(--mute-2);
+  pointer-events:none;
 }
-.bkt-round:not(:first-child) .bkt-cell::after{
-  content:'';
-  position:absolute;
-  left:-14px; top:50%;
-  width:14px; height:1px;
-  background:var(--line);
-}
-.bkt-round:not(:last-child) .bkt-match::after{
-  content:'';
-  position:absolute;
-  right:-14px; top:50%;
-  width:14px; height:1px;
-  background:var(--line);
-}
-/* 3위 결정전 등 단독 라운드는 연결선 없음 */
-.bkt-round.is-standalone .bkt-cell::before,
-.bkt-round.is-standalone .bkt-cell::after{ content:none; }
+.bkt-link.is-down{ border-top-width:1px; border-right-width:1px; }
+.bkt-link.is-up{ border-bottom-width:1px; border-right-width:1px; }
+.bkt-link.is-in{ width:calc(var(--gx) / 2); height:0; border-top-width:1px; }
 
 /* ---------- 매치 카드 ---------- */
 .bkt-match{
   position:relative;
   width:100%;
-  border:1px solid var(--card-border);
-  border-radius:var(--r-md);
+  box-sizing:border-box;
+  border-radius:var(--r-sm);
   background:var(--bg-card);
+  box-shadow:0 0 0 1px var(--card-border);
   overflow:hidden;
-  scroll-margin-top:calc(var(--nav-h) + 140px);
-  transition:border-color .25s ease, box-shadow .25s ease;
+  scroll-margin-top:calc(var(--nav-h) + 160px);
+  transition:box-shadow .25s ease;
 }
-.bkt-match.is-bye{ opacity:0.55; }
+.bkt-match.is-bye{ opacity:0.5; }
 .bkt-match.is-hit{
-  border-color:var(--red);
-  box-shadow:0 0 0 1px var(--red), 0 0 28px -6px rgba(230,0,18,0.75);
+  box-shadow:0 0 0 1px var(--red), 0 0 0 2px rgba(230,0,18,0.35), 0 0 28px -6px rgba(230,0,18,0.75);
 }
 @keyframes bktFlash{
   0%,100%{ box-shadow:0 0 0 1px var(--red), 0 0 28px -6px rgba(230,0,18,0.75); }
@@ -223,14 +222,18 @@
 .bkt-match.is-flash{ animation:bktFlash 0.8s ease-in-out 3; }
 
 .bkt-match-head{
-  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
-  padding:7px 11px;
+  display:flex; align-items:center; gap:7px;
+  box-sizing:border-box;
+  height:var(--hh, 26px);
+  padding:0 10px;
   background:rgba(255,255,255,0.035);
   border-bottom:1px solid var(--line-2);
   font-family:var(--mono);
   font-size:10px; letter-spacing:0.4px;
   color:var(--mute);
+  white-space:nowrap; overflow:hidden;
 }
+.bkt-label{ font-family:var(--font); font-size:10.5px; font-weight:700; color:var(--mute); letter-spacing:0.2px; }
 .bkt-no{ color:var(--white); font-weight:700; }
 .bkt-time{ color:var(--gold); font-weight:700; margin-left:auto; }
 /* 예상 시작시각을 감춘 상태에서는 경기시간(분)이 오른쪽 끝에 붙는다 */
@@ -241,16 +244,19 @@
   padding:3px 7px; border-radius:var(--r-pill); line-height:1;
   border:1px solid var(--line);
   color:var(--mute);
+  margin-left:auto;
 }
+.bkt-status + .bkt-dur{ margin-left:0; }
 .bkt-status.s-live{ color:#fff; background:var(--red); border-color:var(--red); }
 .bkt-status.s-done{ color:#0b0c10; background:var(--mute); border-color:var(--mute); }
 .bkt-status.s-bye{ color:var(--gold); border-color:rgba(217,178,94,0.4); }
 
 .bkt-slot{
-  display:flex; align-items:center; gap:9px;
-  padding:11px 12px;
+  display:flex; align-items:center; gap:8px;
+  box-sizing:border-box;
+  height:var(--sh, 44px);
+  padding:0 10px;
   border-bottom:1px solid var(--line-2);
-  min-height:44px;
 }
 .bkt-slot:last-child{ border-bottom:none; }
 .bkt-slot.is-winner{ background:rgba(230,0,18,0.09); }
@@ -263,13 +269,18 @@
   flex-shrink:0;
 }
 .bkt-slot.is-loser{ opacity:0.5; }
+.bkt-slot.is-hit{ background:rgba(217,178,94,0.08); }
 .bkt-slot.is-tbd .bkt-name,
-.bkt-slot.is-bye .bkt-name{ color:var(--mute-2); font-weight:500; font-style:normal; }
+.bkt-slot.is-bye .bkt-name{ color:var(--mute-2); font-weight:500; font-size:12px; font-style:normal; }
 
 .bkt-seed{
   font-family:var(--mono); font-size:9.5px; font-weight:700;
   color:#0b0c10; background:var(--gold);
   border-radius:3px; padding:2px 4px; line-height:1; flex-shrink:0;
+}
+.bkt-who{
+  display:flex; flex-direction:column; justify-content:center;
+  min-width:0; flex:1; line-height:1.3;
 }
 .bkt-name{
   font-family:var(--font); font-size:13px; font-weight:700; color:var(--white);
@@ -278,7 +289,6 @@
 .bkt-team{
   font-size:10.5px; color:var(--mute);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  max-width:88px;
 }
 .bkt-score{
   margin-left:auto;
@@ -330,22 +340,20 @@
 /* ---------- 반응형 ---------- */
 @media (max-width:900px){
   .bkt-division{ padding:20px 16px; }
-  .bkt-rounds{ gap:24px; }
-  .bkt-round{ min-width:188px; flex:0 0 188px; }
+  .bkt-tree{ --cw:196px; --gx:30px; }
 }
 @media (max-width:640px){
-  .bkt-toolbar{ padding:14px 0 12px; }
+  /* 탭·검색·필터가 화면을 가리지 않도록 좁은 화면에서는 고정하지 않는다 */
+  .bkt-toolbar{ position:static; padding:14px 0 12px; margin-bottom:24px; }
   .bkt-division-title{ font-size:15px; width:100%; }
-  .bkt-round{ min-width:176px; flex:0 0 176px; }
+  .bkt-tree{ --cw:172px; --gx:24px; --sh:42px; --uh:116px; }
   .bkt-name{ font-size:12.5px; }
-  .bkt-team{ max-width:70px; }
-  .bkt-cell{ min-height:80px; }
-  /* 좁은 화면에서 카드 헤더가 두 줄로 접히지 않도록 */
-  .bkt-match-head{ flex-wrap:nowrap; gap:6px; padding:7px 9px; }
-  .bkt-slot{ padding:10px; gap:7px; }
+  .bkt-match-head{ gap:6px; padding:0 9px; }
+  .bkt-slot{ padding:0 9px; gap:7px; }
+  .bkt-tab{ font-size:12px; padding:9px 14px; }
 }
 @media (max-width:360px){
-  .bkt-round{ min-width:164px; flex:0 0 164px; }
+  .bkt-tree{ --cw:160px; --gx:20px; }
   .bkt-division{ padding:16px 12px; }
 }
 
@@ -360,13 +368,14 @@
     background:#fff !important; border:1px solid #bbb !important; box-shadow:none !important;
     page-break-inside:avoid; break-inside:avoid; margin-bottom:14px; padding:14px;
   }
-  .bkt-division-title, .bkt-name, .bkt-no, .bkt-score{ color:#111 !important; }
-  .bkt-tag, .bkt-team, .bkt-round-label, .bkt-dur{ color:#555 !important; }
+  .bkt-division-title, .bkt-name, .bkt-no, .bkt-score, .bkt-section-label{ color:#111 !important; }
+  .bkt-tag, .bkt-team, .bkt-label, .bkt-dur{ color:#555 !important; }
   .bkt-time{ color:#111 !important; }
-  .bkt-match{ background:#fff !important; border:1px solid #bbb !important; }
+  .bkt-match{ background:#fff !important; box-shadow:0 0 0 1px #bbb !important; }
   .bkt-match-head{ background:#f2f2f2 !important; }
   .bkt-slot.is-winner{ background:#eee !important; }
   .bkt-slot.is-winner::before{ background:#111 !important; }
+  .bkt-link{ border-color:#999 !important; }
   .bkt-scroll{ overflow:visible !important; }
-  .bkt-rounds{ min-width:0 !important; }
+  .bkt-tree{ --cw:200px; --gx:28px; }
 }
