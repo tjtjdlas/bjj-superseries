@@ -63,16 +63,21 @@
     var winner = B.winnerOf(match, byId);
     var skipped = B.isSkippedMatch(match, byId);
     var hit = false;
+    // 매트 탭에서 보고 있을 때, 다른 매트에서 치르는 경기는 흐리게
+    var elsewhere = !!(ctx.mat && match.mat && match.mat !== ctx.mat);
+    // 부문 전체가 한 매트면 매트 표시는 부문 머리의 태그로 충분하다
+    var showMat = !!match.mat && !(ctx.divMat && match.mat === ctx.divMat);
 
     var slotsHtml = occ.map(function (o, i) {
       var cls = ['bkt-slot'];
       var inner = '';
+      var raw = (match.slots && match.slots[i]) || {};
       if (o.kind === 'bye') {
         cls.push('is-bye');
         inner = '<span class="bkt-who"><span class="bkt-name">부전승</span></span>';
       } else if (o.kind === 'tbd') {
         cls.push('is-tbd');
-        inner = '<span class="bkt-who"><span class="bkt-name">' + esc(o.fromLabel || '진출자 미정') + '</span></span>';
+        inner = '<span class="bkt-who"><span class="bkt-name">' + esc(o.fromLabel || (raw.tbd ? '추후 공개' : '진출자 미정')) + '</span></span>';
       } else {
         var e = entries[o.entryId] || { name: '(알 수 없음)', team: '' };
         // 부전승 경기는 치르지 않았으므로 승/패 표시를 하지 않는다
@@ -97,7 +102,7 @@
       '<div class="bkt-match-head">' +
         '<span class="bkt-label">' + esc(match.label || '') + '</span>' +
         (match.no ? '<span class="bkt-no">#' + esc(match.no) + '</span>' : '') +
-        (match.mat ? '<span class="bkt-mat">MAT ' + esc(match.mat) + '</span>' : '') +
+        (showMat ? '<span class="bkt-mat">MAT ' + esc(match.mat) + '</span>' : '') +
         (status !== '예정' ? '<span class="bkt-status ' + statusClass(status) + '">' + esc(status) + '</span>' : '') +
         (SHOW_TIME && match.time ? '<span class="bkt-time" title="예상 경기 시간">' + esc(match.time) + '</span>' : '') +
         (match.duration && !skipped ? '<span class="bkt-dur">' + esc(match.duration) + '분</span>' : '') +
@@ -108,7 +113,7 @@
       (SHOW_TIME && match.time ? ', 예상 시작 ' + match.time : '') + (skipped ? ', 부전승 경기' : '');
 
     return {
-      html: '<div class="bkt-match' + (skipped ? ' is-bye' : '') + (hit ? ' is-hit' : '') + '"' +
+      html: '<div class="bkt-match' + (skipped ? ' is-bye' : '') + (hit ? ' is-hit' : '') + (elsewhere ? ' is-elsewhere' : '') + '"' +
         (style ? ' style="' + style + '"' : '') +
         ' id="m-' + esc(match.id) + '" data-mid="' + esc(match.id) + '"' +
         ' role="group" aria-label="' + esc(aria) + '">' + head + slotsHtml + '</div>',
@@ -264,13 +269,18 @@
     return '<div class="bkt-section-label">' + esc(text) + '</div>';
   }
 
+  // opts.mat: 공개 화면에서 보고 있는 매트 탭 번호(매트별 엑셀로 올린 대진만 해당)
   function renderDivision(division, opts) {
     opts = opts || {};
+    var byMat = division.source === 'mat';
     var ctx = {
       byId: opts.byId,
       entries: B.entryIndex(division),
-      query: opts.query || ''
+      query: opts.query || '',
+      mat: byMat ? (opts.mat || null) : null,
+      divMat: byMat ? division.mat : null
     };
+    var mats = (byMat && division.mats) || [];
 
     var anyHit = false;
     var body = '';
@@ -314,7 +324,10 @@
         ? '<span class="bkt-tag">선수 추후 공개</span>'
         : '<span class="bkt-tag">참가 ' + (division.entryCount || 0) + '명</span>',
       multi ? '<span class="bkt-tag">' + pools.length + '개 조</span>' : '',
-      division.mat ? '<span class="bkt-tag is-accent">MAT ' + esc(division.mat) + '</span>' : '',
+      mats.length > 1
+        ? '<span class="bkt-tag is-accent" title="여러 매트에서 나눠 치르는 부문">MAT ' + esc(mats.join(' · ')) + '</span>'
+        : (division.mat ? '<span class="bkt-tag is-accent">MAT ' + esc(division.mat) + '</span>' : ''),
+      (ctx.mat && mats.length && mats.indexOf(ctx.mat) === -1) ? '<span class="bkt-tag">이 매트 경기 없음</span>' : '',
       (SHOW_TIME && firstTimeOf(division)) ? '<span class="bkt-tag is-accent">시작 ' + esc(firstTimeOf(division)) + '</span>' : '',
       (division.conflicts && division.conflicts.length) ? '<span class="bkt-tag is-red" title="같은 소속팀 1회전 회피 불가">동일팀 대결 ' + division.conflicts.length + '건</span>' : ''
     ].filter(Boolean).join('');

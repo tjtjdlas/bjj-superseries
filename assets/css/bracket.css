@@ -126,7 +126,7 @@
 .bkt-podium-name{ font-size:13.5px; font-weight:700; color:var(--white); }
 .bkt-podium-team{ font-size:11.5px; color:var(--mute); }
 
-/* 부문 그룹 탭 (엑셀 시트: 중등부 / 고등부 / 어덜트 … ) */
+/* 탭 (엑셀 시트: 1매트 / 2매트 … 또는 중등부 / 고등부 … ) */
 .bkt-tabs{
   position:relative;
   display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px;
@@ -212,6 +212,10 @@
   transition:box-shadow .25s ease;
 }
 .bkt-match.is-bye{ opacity:0.5; }
+/* 매트 탭에서 다른 매트에서 치르는 경기 */
+.bkt-match.is-elsewhere{ opacity:0.42; }
+.bkt-match.is-elsewhere.is-hit{ opacity:1; }
+.bkt-match.is-elsewhere .bkt-mat{ color:var(--gold); font-weight:700; }
 .bkt-match.is-hit{
   box-shadow:0 0 0 1px var(--red), 0 0 0 2px rgba(230,0,18,0.35), 0 0 28px -6px rgba(230,0,18,0.75);
 }

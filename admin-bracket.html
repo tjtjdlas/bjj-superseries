@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>대진표 관리자 | SPYDER BJJ SUPER SERIES</title>
 <link rel="stylesheet" href="assets/css/style.css?v=79">
-<link rel="stylesheet" href="assets/css/bracket.css?v=3">
+<link rel="stylesheet" href="assets/css/bracket.css?v=4">
 <style>
   .admin-wrap{ max-width:1180px; margin:0 auto; padding:calc(var(--nav-h) + 50px) 24px 120px; }
   .admin-bar{
@@ -232,9 +232,12 @@
   <div class="admin-block" id="step1">
     <h2>① 대진표 엑셀 올리기</h2>
     <p class="desc">
-      <b style="color:var(--white)">대진표 엑셀(스파이더 대진표 양식)</b>을 그대로 첨부하세요.
-      시트 1개가 부문 그룹(중등부·고등부·어덜트 …)이 되고, 각 부문 제목 아래 선수 칸(이름/소속, 부전승, "1경기 패자")을 위→아래 순서대로 읽어
-      2·4·5·8·10인 대진과 A·B조 결승을 엑셀과 같은 모양으로 만듭니다. 시트의 "게임수"와 실제 경기 수도 비교해 알려 줍니다.<br>
+      <b style="color:var(--white)">대진표 엑셀(스파이더 대진표 양식)</b>을 그대로 첨부하세요. 아래 두 가지를 자동으로 구분합니다.<br>
+      · <b style="color:var(--white)">매트별 대진표</b>(시트 이름이 1매트·2매트 …): 시트 1개가 매트 탭 1개가 되고, 시트에 그려진 순서대로 보입니다.
+      여러 매트 시트에 같은 대진을 그린 부문은 한 부문으로 합치고, 다른 시트에 있는 A·B조와 결승도 제목으로 이어 붙입니다. "1매트 34"·"1 - 33" 칸은 그 경기의 매트·경기번호로 읽습니다.<br>
+      · <b style="color:var(--white)">부문별 대진표</b>(시트 이름이 중등부·고등부 …): 시트 1개가 부문 그룹이 됩니다.<br>
+      두 양식 모두 부문 제목 아래 선수 칸(이름/소속, 부전승, "1경기 패자")을 위→아래 순서대로 읽어
+      2·4·5·8·10인 대진과 조별 결승을 엑셀과 같은 모양으로 만듭니다.<br>
       첨부하면 바로 검증 결과가 나오고, 결과 아래 <b style="color:var(--white)">[검증 결과 초안에 반영]</b>을 눌러야 초안에 들어갑니다.
     </p>
     <div class="admin-actions" style="margin-top:0;">
@@ -488,8 +491,9 @@
 })();
 </script>
 <script src="assets/js/bracket-core.js?v=2"></script>
-<script src="assets/js/bracket-render.js?v=3"></script>
+<script src="assets/js/bracket-render.js?v=4"></script>
 <script src="assets/js/bracket-import.js?v=2"></script>
-<script src="assets/js/admin-bracket.js?v=4"></script>
+<script src="assets/js/bracket-import-mat.js?v=1"></script>
+<script src="assets/js/admin-bracket.js?v=5"></script>
 </body>
 </html>

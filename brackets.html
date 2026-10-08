@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대진표 | SPYDER BJJ SUPER SERIES 2026 PART 2</title>
-<meta name="description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 대진표. 연령·성별·등급·체급 필터와 선수 이름 검색으로 내 대진을 확인하세요.">
+<meta name="description" content="SPYDER BJJ SUPER SERIES 2026 PART 2 대진표. 매트별 대진과 선수 이름 검색으로 내 대진을 확인하세요.">
 <link rel="icon" type="image/png" href="assets/img/spyder-bug.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="대진표 | SPYDER BJJ SUPER SERIES 2026 PART 2">
-<meta property="og:description" content="연령·성별·등급·체급 필터와 선수 이름 검색으로 내 대진을 확인하세요.">
+<meta property="og:description" content="매트별 대진과 선수 이름 검색으로 내 대진을 확인하세요.">
 <meta property="og:image" content="assets/img/poster-main.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="assets/css/style.css?v=79">
-<link rel="stylesheet" href="assets/css/bracket.css?v=3">
+<link rel="stylesheet" href="assets/css/bracket.css?v=4">
 </head>
 <body>
 
@@ -43,13 +43,13 @@
   <div class="container">
     <div class="section-head section-head-center section-head-band bkt-print-hide">
       <h2 class="section-title display reveal-text" style="font-size:clamp(26px,4vw,36px);">대진표</h2>
-      <p class="section-desc reveal" style="transition-delay:.15s;">부문 탭에서 등급·성별·체급을 고르거나, 이름·소속팀을 검색해 내 대진을 바로 찾을 수 있습니다.</p>
+      <p class="section-desc reveal" style="transition-delay:.15s;">매트 탭에서 내 매트의 대진을 순서대로 보거나, 이름·소속팀을 검색해 내 대진을 바로 찾을 수 있습니다.</p>
     </div>
 
     <!-- 부문 탭 · 필터 & 검색 -->
     <div class="bkt-toolbar bkt-print-hide">
       <div class="container" style="padding:0;">
-        <div class="bkt-tabs" id="bracketTabs" role="tablist" aria-label="부문 그룹" hidden></div>
+        <div class="bkt-tabs" id="bracketTabs" role="tablist" aria-label="매트" hidden></div>
         <div class="bkt-search-wrap">
           <input type="text" id="bracketSearch" placeholder="선수 이름 또는 소속팀 검색 (초성 검색 가능)" disabled aria-label="선수 이름 또는 소속팀 검색">
           <button type="button" class="bkt-btn is-on" id="bracketMineBtn" aria-pressed="true" title="검색어와 일치하는 부문만 표시">내 대진만 보기</button>
@@ -65,7 +65,7 @@
     <p class="bkt-count" id="bracketCount"></p>
     <div id="bracketList"></div>
     <p class="roster-updated" id="bracketUpdated"></p>
-    <p class="bkt-note bkt-print-hide">※ 경기 시작 시각·매트는 아직 공개되지 않았습니다. 진행 순서는 현장 매트 안내와 장내 방송을 확인해 주세요.</p>
+    <p class="bkt-note bkt-print-hide">※ 매트 탭의 부문은 운영 측 매트별 대진표에 배치된 순서대로 표시됩니다. 경기 카드의 #번호는 해당 매트의 경기번호이며 일부 경기에만 표기됩니다. 경기 시작 시각과 실제 진행은 현장 매트 안내와 장내 방송을 확인해 주세요.</p>
   </div>
 </section>
 
@@ -91,7 +91,7 @@
 <script src="assets/js/main.js?v=45"></script>
 <script src="assets/js/footer.js?v=41"></script>
 <script src="assets/js/bracket-core.js?v=2"></script>
-<script src="assets/js/bracket-render.js?v=3"></script>
-<script src="assets/js/brackets.js?v=5"></script>
+<script src="assets/js/bracket-render.js?v=4"></script>
+<script src="assets/js/brackets.js?v=6"></script>
 </body>
 </html>

@@ -194,6 +194,7 @@
    */
 
   var IMP = window.SPYDER_BRACKET_IMPORT;
+  var IMPM = window.SPYDER_BRACKET_IMPORT_MAT; // 매트별 대진표 엑셀(1매트 … 시트)
   var lastImport = null;
 
   // 검증 결과를 그리고 결과 위치로 화면을 옮긴다(결과 아래에 [초안에 반영] 버튼이 있음)
@@ -294,6 +295,53 @@
     if (errBtn) errBtn.disabled = !res.errors.length;
   }
 
+  // 매트별 대진표(시트 1개 = 매트 1개) 검증 결과
+  function renderMatImportResult(res, box, applyBtn, errBtn) {
+    var s = res.summary;
+    if (!s) {
+      box.innerHTML = issueTable(res.errors, 'err');
+      if (applyBtn) applyBtn.disabled = true;
+      if (errBtn) errBtn.disabled = !res.errors.length;
+      return;
+    }
+    var sheetRows = (res.sheets || []).map(function (x) {
+      return '<tr>' +
+        '<td class="c-col">' + esc(x.name) + '</td>' +
+        '<td>' + x.divisions + '</td>' +
+        '<td>' + (x.shared || '-') + '</td>' +
+        '<td>' + x.matches + '</td>' +
+        '<td>' + (x.numbered || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    box.innerHTML =
+      '<p class="admin-note" style="margin-top:18px;"><b>매트별 대진표</b>로 인식했습니다. 시트 1개가 공개 화면의 매트 탭 1개가 되고, 시트에 그려진 순서대로 보입니다.</p>' +
+      statBoxes([
+        { n: s.sheets, l: '매트' },
+        { n: s.divisions, l: '부문', c: s.divisions ? 'is-ok' : '' },
+        { n: s.shared, l: '여러 매트 부문' },
+        { n: s.players, l: '선수(연인원)' },
+        { n: s.matches, l: '실제 경기' },
+        { n: s.numbered, l: '경기번호 반영' },
+        { n: s.pending, l: '선수 공개 전 부문' },
+        { n: s.warnings, l: '경고', c: s.warnings ? 'is-warn' : '' },
+        { n: s.errors, l: '오류', c: s.errors ? 'is-err' : '' }
+      ]) +
+      '<div class="issue-wrap"><table class="issue-table">' +
+        '<thead><tr><th>매트 시트</th><th>부문</th><th>여러 매트 부문</th><th>이 매트 경기</th><th>경기번호 표기</th></tr></thead>' +
+        '<tbody>' + sheetRows + '</tbody></table></div>' +
+      (s.noMat ? '<p class="admin-note" style="color:var(--gold);">매트를 알 수 없는 경기 ' + s.noMat + '개가 있습니다. 공개 화면에는 매트 표시 없이 나옵니다.</p>' : '') +
+      issueTable(res.errors, 'err') +
+      issueTable(res.warnings, 'warn') +
+      (s.divisions
+        ? '<p class="admin-note">아래 <b>[검증 결과 초안에 반영]</b>을 누르면 부문 ' + s.divisions + '개가 초안에 반영됩니다. ' +
+          '경기번호는 엑셀에 적힌 경기("1매트 34" 등)에만 들어가고, 나머지는 비워 둡니다. 게시 전까지 공개 화면에는 영향이 없습니다.</p>'
+        : '<p class="admin-note">반영할 수 있는 부문이 없습니다.</p>');
+
+    if (applyBtn) applyBtn.disabled = !s.divisions;
+    if (errBtn) errBtn.disabled = !res.errors.length;
+  }
+
   function renderImportResult(res) {
     var box = $('#importResult');
     if (!box) return;
@@ -303,6 +351,10 @@
 
     if (res.kind === 'sheet') {
       renderSheetImportResult(res, box, applyBtn, errBtn);
+      return;
+    }
+    if (res.kind === 'mat') {
+      renderMatImportResult(res, box, applyBtn, errBtn);
       return;
     }
 
@@ -354,6 +406,12 @@
         var wb = XLSX.read(e.target.result, { type: 'array', cellDates: false });
         // "대진" 시트가 있으면 행 양식, 없고 시트마다 대진도가 그려져 있으면 대진 시트 양식
         var rowSheet = wb.SheetNames.filter(function (n) { return n.replace(/\s/g, '') === '대진'; })[0];
+        // 시트 이름이 "1매트", "2매트" … 이면 매트별 대진표
+        if (!rowSheet && IMPM && IMPM.looksLikeMatWorkbook(XLSX, wb)) {
+          lastImport = IMPM.parseMatWorkbook(XLSX, wb, draft.settings);
+          showImportResult(lastImport);
+          return;
+        }
         if (!rowSheet && IMP.looksLikeSheetWorkbook(XLSX, wb)) {
           lastImport = IMP.parseSheetWorkbook(XLSX, wb, draft.settings);
           showImportResult(lastImport);
@@ -392,8 +450,9 @@
     }
 
     var byIdNew;
-    if (lastImport.kind === 'sheet') {
+    if (lastImport.kind === 'sheet' || lastImport.kind === 'mat') {
       // 대진 시트 양식에는 경기번호·매트·시각이 없다. 임의 번호가 공개되지 않도록 자동 배정하지 않는다.
+      // 매트별 대진표는 엑셀에서 읽은 매트·경기번호를 그대로 쓴다(자동 배정으로 덮어쓰지 않음).
       byIdNew = B.indexMatches(draft);
     } else {
       B.scheduleAll(draft);
@@ -450,8 +509,9 @@
       return;
     }
     divSelect.innerHTML = draft.divisions.map(function (d) {
+      var where = (d.sheets && d.sheets.length) ? '[' + d.sheets.join('·') + '] ' : '';
       return '<option value="' + esc(d.id) + '"' + (d.id === currentDivId ? ' selected' : '') + '>' +
-        esc(d.title) + ' (' + (d.entryCount || 0) + '명)</option>';
+        esc(where + d.title) + ' (' + (d.entryCount || 0) + '명)</option>';
     }).join('');
     if (!currentDivId) currentDivId = draft.divisions[0].id;
     divSelect.onchange = function () {
@@ -690,13 +750,19 @@
         var players = 0;
         var matches = 0;
         var groups = {};
+        var byMat = false;
         draft.divisions.forEach(function (d) {
           players += d.entryCount || 0;
-          groups[d.group || d.age || '기타'] = true;
+          if (d.sheets && d.sheets.length) {
+            byMat = true;
+            d.sheets.forEach(function (g) { groups[g] = true; });
+          } else {
+            groups[d.group || d.age || '기타'] = true;
+          }
           matches += B.allMatches(d).filter(function (m) { return !B.isSkippedMatch(m, byId); }).length;
         });
         box.innerHTML = statBoxes([
-          { n: Object.keys(groups).length, l: '부문 그룹' },
+          { n: Object.keys(groups).length, l: byMat ? '매트 탭' : '부문 그룹' },
           { n: n, l: '부문', c: 'is-ok' },
           { n: players, l: '선수(연인원)' },
           { n: matches, l: '실제 경기' },

@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var shareBtn = document.querySelector('#bracketShareBtn');
   if (!listEl) return;
 
-  // 그룹 탭(엑셀 시트: 중등부 / 고등부 / 어덜트 블루벨트 …) 안에서 쓰는 세부 필터.
+  // 탭(엑셀 시트: 1매트 / 2매트 … 또는 중등부 / 고등부 …) 안에서 쓰는 세부 필터.
   // 탭 안에 값이 2개 이상인 항목만 보여 준다.
   var FIELDS = [
     { key: 'age', label: '연령부' },
@@ -68,15 +68,49 @@ document.addEventListener('DOMContentLoaded', function () {
     return d.group || d.age || '기타';
   }
 
+  // 매트별 엑셀(1매트 … 8매트 시트)로 들어온 부문은 경기가 있는 매트 탭마다 보인다.
+  function groupsOf(d) {
+    return (d.sheets && d.sheets.length) ? d.sheets : [groupOf(d)];
+  }
+
+  function inGroup(d, g) {
+    return groupsOf(d).indexOf(g) !== -1;
+  }
+
+  function matMode() {
+    return state.divisions.some(function (d) { return d.sheets && d.sheets.length; });
+  }
+
+  // "3매트" 탭 → 3 (매트 탭이 아니면 null)
+  function matOfGroup(g) {
+    var m = /^\s*(\d+)\s*매트\s*$/.exec(g || '');
+    return m ? Number(m[1]) : null;
+  }
+
   function groupList() {
     var list = [];
     var idx = {};
     state.divisions.forEach(function (d) {
-      var g = groupOf(d);
-      if (idx[g] == null) { idx[g] = list.length; list.push({ name: g, count: 0 }); }
-      list[idx[g]].count++;
+      groupsOf(d).forEach(function (g) {
+        if (idx[g] == null) { idx[g] = list.length; list.push({ name: g, count: 0 }); }
+        list[idx[g]].count++;
+      });
     });
+    if (matMode()) {
+      list.sort(function (a, b) { return a.name.localeCompare(b.name, 'ko', { numeric: true }); });
+    }
     return list;
+  }
+
+  // 매트 탭 안에서는 엑셀 매트 시트에 그려진 순서대로
+  function sortForGroup(list) {
+    if (!list.some(function (d) { return d.sheetPos; })) return list;
+    function pos(d) {
+      return (d.sheetPos && d.sheetPos[group] != null) ? d.sheetPos[group] : 9999;
+    }
+    return list.map(function (d, i) { return { d: d, i: i }; })
+      .sort(function (a, b) { return (pos(a.d) - pos(b.d)) || (a.i - b.i); })
+      .map(function (x) { return x.d; });
   }
 
   function ensureGroup() {
@@ -222,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function valuesFor(key) {
     var set = {};
     state.divisions.forEach(function (d) {
-      if (groupOf(d) !== group) return;
+      if (!inGroup(d, group)) return;
       var v = fieldValue(d, key);
       if (v) set[v] = true;
     });
@@ -280,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- 렌더 ---------- */
 
   function passesFilters(d, ignoreGroup) {
-    if (!ignoreGroup && groupOf(d) !== group) return false;
+    if (!ignoreGroup && !inGroup(d, group)) return false;
     for (var k in filters) {
       if (fieldValue(d, k) !== filters[k]) return false;
     }
@@ -304,11 +338,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var all = searchingAll();
     var pool = state.divisions.filter(function (d) { return passesFilters(d, all); });
+    if (!all) pool = sortForGroup(pool);
+    var tabMat = all ? null : matOfGroup(group);
     var rendered = [];
     var hitCount = 0;
+    var matMatches = 0;
 
     pool.forEach(function (d) {
-      var res = R.renderDivision(d, { byId: byId, query: query });
+      var res = R.renderDivision(d, { byId: byId, query: query, mat: tabMat });
+      if (tabMat) {
+        B.allMatches(d).forEach(function (m) {
+          if (m.mat === tabMat && !B.isSkippedMatch(m, byId)) matMatches++;
+        });
+      }
       if (res.hit) hitCount++;
       if (all && !res.hit) return;
       rendered.push(res.html);
@@ -330,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function () {
         parts = ['전체 ' + state.divisions.length + '개 부문에서 검색 · 일치 부문 ' + hitCount + '개'];
       } else {
         parts = [group + ' ' + rendered.length + '개 부문'];
+        if (tabMat && !query && !Object.keys(filters).length) parts.push('이 매트 ' + matMatches + '경기');
         if (query) parts.push('검색 일치 부문 ' + hitCount + '개');
         parts.push('전체 ' + state.divisions.length + '개 부문');
       }
