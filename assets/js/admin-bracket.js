@@ -188,10 +188,20 @@
     setStatus(generateStatus, '"' + last.label + '" 상태로 복원했습니다.', 'ok');
   }
 
-  /* ---------- 엑셀 대진 가져오기 ---------- */
+  /* ---------- 엑셀 대진 가져오기 ----------
+   * 대진표 엑셀 첨부(대진 시트 양식)와 셀 범위 붙여넣기(행 양식)는 운영에 꼭 필요한 기능이다.
+   * 화면 배치를 바꾸더라도 이 기능을 없애거나 읽는 방식을 바꾸지 말 것.
+   */
 
   var IMP = window.SPYDER_BRACKET_IMPORT;
   var lastImport = null;
+
+  // 검증 결과를 그리고 결과 위치로 화면을 옮긴다(결과 아래에 [초안에 반영] 버튼이 있음)
+  function showImportResult(res) {
+    renderImportResult(res);
+    var box = $('#importResult');
+    if (box && box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   function renderImportHint() {
     var el = $('#importHint');
@@ -276,7 +286,7 @@
       issueTable(res.warnings, 'warn') +
       (s.divisions
         ? '<p class="admin-note">아래 <b>[검증 결과 초안에 반영]</b>을 누르면 부문 ' + s.divisions + '개가 초안에 반영됩니다. ' +
-          '경기번호·매트·시각은 엑셀에 없으므로 비워 둡니다(필요하면 [04]에서 입력하거나 [03]의 "경기번호·시간만 다시 계산"을 사용). ' +
+          '경기번호·매트·시각은 엑셀에 없으므로 비워 둡니다(필요하면 "대회 당일 결과 입력"에서 입력하거나 "고급 기능"의 "경기번호·시간만 다시 계산"을 사용). ' +
           '게시 전까지 공개 화면에는 영향이 없습니다.</p>'
         : '<p class="admin-note">반영할 수 있는 부문이 없습니다.</p>');
 
@@ -327,7 +337,7 @@
   function runImport(rows) {
     if (!IMP) { alert('가져오기 모듈을 불러오지 못했습니다.'); return; }
     lastImport = IMP.parse(rows, draft.settings);
-    renderImportResult(lastImport);
+    showImportResult(lastImport);
   }
 
   function importFromPaste() {
@@ -346,7 +356,7 @@
         var rowSheet = wb.SheetNames.filter(function (n) { return n.replace(/\s/g, '') === '대진'; })[0];
         if (!rowSheet && IMP.looksLikeSheetWorkbook(XLSX, wb)) {
           lastImport = IMP.parseSheetWorkbook(XLSX, wb, draft.settings);
-          renderImportResult(lastImport);
+          showImportResult(lastImport);
           return;
         }
         var sheetName = rowSheet || wb.SheetNames[0];
@@ -406,9 +416,9 @@
     markDirty();
     renderAll();
     setStatus(generateStatus,
-      '엑셀 대진을 초안에 반영했습니다. 부문 ' + incoming.length + '개 · 선수 ' + lastImport.summary.players + '명. [06]에서 게시하세요.', 'ok');
-    var box = $('#importResult');
-    if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      '엑셀 대진을 초안에 반영했습니다. 부문 ' + incoming.length + '개 · 선수 ' + lastImport.summary.players + '명. 아래 [전체 미리보기]로 확인한 뒤 ③에서 게시하세요.', 'ok');
+    var step2 = $('#step2');
+    if (step2) step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function exportErrorRows() {
@@ -467,7 +477,7 @@
     var d = currentDivision();
     renderDivSelect();
     if (!d) {
-      matchTable.innerHTML = '<tbody><tr><td style="padding:40px;text-align:center;color:var(--mute-2);">생성된 대진이 없습니다. [03]에서 대진을 생성하세요.</td></tr></tbody>';
+      matchTable.innerHTML = '<tbody><tr><td style="padding:40px;text-align:center;color:var(--mute-2);">초안에 대진이 없습니다. ①에서 대진표 엑셀을 첨부하고 [검증 결과 초안에 반영]을 눌러 주세요.</td></tr></tbody>';
       if (divWarn) divWarn.textContent = '';
       return;
     }
@@ -663,6 +673,42 @@
     previewBox.innerHTML = divs.map(function (d) {
       return R.renderDivision(d, { byId: byId, query: '' }).html;
     }).join('');
+    // 결과 입력 구역에서 누른 경우 ②의 미리보기 위치로 이동
+    if (!all && previewBox.scrollIntoView) previewBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ---------- 초안 요약 (②) ---------- */
+
+  function renderDraftSummary() {
+    var n = draft.divisions.length;
+    var box = $('#draftSummary');
+    if (box) {
+      if (!n) {
+        box.innerHTML = '<p class="admin-note" style="margin:0;">초안이 비어 있습니다. ①에서 대진표 엑셀을 첨부하고 <b>[검증 결과 초안에 반영]</b>을 눌러 주세요.</p>';
+      } else {
+        byId = B.indexMatches(draft);
+        var players = 0;
+        var matches = 0;
+        var groups = {};
+        draft.divisions.forEach(function (d) {
+          players += d.entryCount || 0;
+          groups[d.group || d.age || '기타'] = true;
+          matches += B.allMatches(d).filter(function (m) { return !B.isSkippedMatch(m, byId); }).length;
+        });
+        box.innerHTML = statBoxes([
+          { n: Object.keys(groups).length, l: '부문 그룹' },
+          { n: n, l: '부문', c: 'is-ok' },
+          { n: players, l: '선수(연인원)' },
+          { n: matches, l: '실제 경기' },
+          { n: record.version ? 'v' + record.version : '-', l: record.version ? '공개 중인 게시본' : '아직 게시 전' }
+        ]);
+      }
+    }
+    // 빈 초안이 게시되지 않도록 (공개 화면을 비우려면 [게시 취소(비우기)] 사용)
+    var pub = $('#publishBtn');
+    if (pub) pub.disabled = !n;
+    var hint = $('#publishHint');
+    if (hint) hint.textContent = n ? '' : '초안에 부문이 없어 게시할 수 없습니다. ①에서 엑셀을 첨부하고 [검증 결과 초안에 반영]을 먼저 눌러 주세요.';
   }
 
   /* ---------- 저장 / 게시 ---------- */
@@ -783,6 +829,7 @@
       record.published = B.clone(draft);
       dirty = false;
       renderHistory();
+      renderDraftSummary();
       setStatus(publishStatus, '게시 완료! (v' + nextVersion + ') 공개 대진표에 실시간 반영되었습니다.', 'ok');
     } catch (e) {
       setStatus(publishStatus, '게시 실패: ' + e.message, 'err');
@@ -810,6 +857,7 @@
       record.history = history;
       record.published_at = null;
       renderHistory();
+      renderDraftSummary();
       setStatus(publishStatus, '게시를 취소했습니다. 공개 화면은 빈 상태로 표시됩니다.', 'ok');
     } catch (e) {
       setStatus(publishStatus, '게시 취소 실패: ' + e.message, 'err');
@@ -927,6 +975,7 @@
     renderImportHint();
     renderMatchTable();
     renderHistory();
+    renderDraftSummary();
   }
 
   /* ---------- 버튼 바인딩 ---------- */
@@ -979,6 +1028,15 @@
     byId = B.indexMatches(draft);
     markDirty();
     renderAll();
+  });
+
+  // 접어 둔 구역(결과 입력 / 고급 기능)은 마지막으로 펼친 상태를 이 브라우저에 기억한다
+  document.querySelectorAll('details[data-remember]').forEach(function (el) {
+    var key = 'spyderBracketAdmin.' + el.dataset.remember;
+    try { if (localStorage.getItem(key) === '1') el.open = true; } catch (e) { /* 저장소 사용 불가 시 기본(접힘) */ }
+    el.addEventListener('toggle', function () {
+      try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (e) { /* 무시 */ }
+    });
   });
 
   /* ---------- 부팅 ---------- */

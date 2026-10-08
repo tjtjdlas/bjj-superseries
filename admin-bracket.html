@@ -144,9 +144,56 @@
   #adminGate .btn{ width:100%; }
   #adminGateError{ display:none; color:var(--red); font-size:12.5px; margin-top:12px; }
 
+  /* 사용 순서 ① → ② → ③ */
+  .admin-flow{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; list-style:none; margin:0 0 24px; padding:0; }
+  .admin-flow li{ display:flex; align-items:center; gap:10px; }
+  .admin-flow li + li::before{ content:'→'; color:var(--mute-2); }
+  .admin-flow a{
+    display:inline-flex; align-items:center; gap:8px; padding:10px 16px;
+    border:1px solid var(--line); border-radius:var(--r-pill);
+    color:var(--mute); font-size:13px; text-decoration:none;
+  }
+  .admin-flow a:hover{ border-color:var(--outline-border); color:var(--white); }
+  .admin-flow a b{ color:var(--white); }
+  .admin-block{ scroll-margin-top:calc(var(--nav-h) + 20px); }
+
+  /* 구역 안의 보조 영역 */
+  .admin-sub{ border-top:1px solid var(--line-2); margin-top:26px; padding-top:22px; }
+  .admin-sub h3{ font-family:var(--font); font-weight:700; font-size:13.5px; color:var(--white); margin-bottom:8px; }
+  .admin-sub h3 span{ font-weight:500; color:var(--mute-2); font-size:12px; }
+  .admin-sub .desc{ margin-bottom:16px; }
+  .apply-row{ border-top:1px solid var(--line-2); padding-top:18px; margin-top:20px; }
+  #importResult:empty + .apply-row{ border-top:none; padding-top:0; }
+  .admin-actions-sub .btn{ padding-top:10px; padding-bottom:10px; font-size:12px; }
+  .admin-wrap .btn:disabled{ opacity:0.35; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  /* 접어 두는 구역 (결과 입력 / 고급 기능) */
+  .admin-fold{
+    border:1px solid var(--card-border); border-radius:var(--r-lg); margin-bottom:24px;
+    background:var(--card-bg), var(--bg-card); background-blend-mode:overlay; box-shadow:var(--card-shadow);
+  }
+  .admin-fold > summary{
+    list-style:none; cursor:pointer; padding:24px 32px;
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px;
+  }
+  .admin-fold > summary::-webkit-details-marker{ display:none; }
+  .admin-fold > summary span{ font-family:var(--font); font-weight:700; font-size:14px; color:var(--white); }
+  .admin-fold > summary span::before{
+    content:'+'; display:inline-block; width:22px; height:22px; margin-right:10px; line-height:20px; text-align:center;
+    border:1px solid var(--line); border-radius:50%; color:var(--mute); font-weight:500;
+  }
+  .admin-fold[open] > summary span::before{ content:'−'; }
+  .admin-fold > summary small{ font-size:12.5px; color:var(--mute-2); }
+  .admin-fold > summary:hover span{ color:#fff; }
+  .admin-fold > summary:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; border-radius:var(--r-lg); }
+  .admin-fold-body{ padding:0 32px 32px; }
+  .admin-fold-body > .admin-sub:first-child{ border-top:none; margin-top:0; padding-top:0; }
+
   @media (max-width:640px){
     .admin-wrap{ padding:calc(var(--nav-h) + 30px) 16px 90px; }
     .admin-block{ padding:22px 16px; }
+    .admin-fold > summary{ padding:20px 16px; }
+    .admin-fold-body{ padding:0 16px 22px; }
   }
 </style>
 </head>
@@ -175,124 +222,43 @@
 
 <div class="admin-wrap">
 
-  <div class="admin-block">
-    <h2>[ 01 ] 참가자 명단 연동</h2>
-    <p class="desc">
-      대진표는 <b style="color:var(--white)">선수 명단 관리자</b>에 등록된 참가자를 그대로 사용합니다(별도 입력 불필요).
-      명단의 분류 항목 중 어느 것이 연령부·성별·등급·체급인지 아래에서 지정하세요. 이 조합이 하나의 부문이 됩니다.
-    </p>
-    <div class="field-grid">
-      <div class="field">
-        <label>연령부</label>
-        <select data-map="age"></select>
-      </div>
-      <div class="field">
-        <label>성별</label>
-        <select data-map="gender"></select>
-      </div>
-      <div class="field">
-        <label>등급 / 벨트</label>
-        <select data-map="grade"></select>
-      </div>
-      <div class="field">
-        <label>체급</label>
-        <select data-map="weight"></select>
-      </div>
-    </div>
-    <div class="admin-actions">
-      <button class="btn btn-outline" id="reloadRosterBtn" type="button">명단 다시 불러오기</button>
-      <span class="status-line" id="rosterStatus">명단을 불러오는 중…</span>
-    </div>
-    <div class="div-list" id="divPreview"></div>
-  </div>
+  <ol class="admin-flow" aria-label="사용 순서">
+    <li><a href="#step1"><b>①</b> 대진표 엑셀 올리기</a></li>
+    <li><a href="#step2"><b>②</b> 초안 확인</a></li>
+    <li><a href="#step3"><b>③</b> 사이트에 게시</a></li>
+  </ol>
 
-  <div class="admin-block">
-    <h2>[ 02 ] 대진 설정</h2>
-    <p class="desc">아래 값은 대진 자동 생성과 경기번호·예상 시간 계산에 사용됩니다. 생성 후에도 개별 경기에서 덮어쓸 수 있습니다.</p>
-    <div class="field-grid">
-      <div class="field">
-        <label>기본 경기시간 (분)</label>
-        <input type="number" min="1" max="60" data-set="defaultDuration">
-      </div>
-      <div class="field">
-        <label>한 조 최대 인원</label>
-        <input type="number" min="2" max="64" data-set="maxPoolSize">
-        <span class="hint">초과 시 A·B·C… 조로 균등 분할</span>
-      </div>
-      <div class="field">
-        <label>매트 수</label>
-        <input type="number" min="1" max="12" data-set="mats">
-      </div>
-      <div class="field">
-        <label>1경기 시작 시각</label>
-        <input type="text" placeholder="10:00" data-set="startTime">
-      </div>
-      <div class="field">
-        <label>경기 사이 여유 (분)</label>
-        <input type="number" min="0" max="30" data-set="gapMin">
-      </div>
-      <div class="field">
-        <label>경기번호 방식</label>
-        <select data-set="numbering">
-          <option value="global">대회 전체 연번</option>
-          <option value="mat">매트별 연번 (1-1, 1-2…)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>3위 결정</label>
-        <select data-set="thirdPlace">
-          <option value="shared">공동 3위 (준결승 패자)</option>
-          <option value="match">3위 결정전 진행</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>같은 소속팀 1회전 회피</label>
-        <select data-set="avoidSameTeam">
-          <option value="1">사용</option>
-          <option value="0">사용 안 함</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>대진 추첨 시드값</label>
-        <input type="number" data-set="randomSeed">
-        <span class="hint">같은 값이면 같은 대진이 재현됩니다</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="admin-block">
-    <h2>[ 03 ] 대진 자동 생성</h2>
+  <!-- ① 대진표 엑셀 첨부 · 붙여넣기: 운영에 꼭 필요한 기능이므로 없애거나 동작을 바꾸지 말 것 -->
+  <div class="admin-block" id="step1">
+    <h2>① 대진표 엑셀 올리기</h2>
     <p class="desc">
-      <b style="color:var(--white)">전체 재생성</b>은 현재 초안의 선수 배치와 입력된 경기 결과를 모두 새로 만듭니다(직전 초안은 자동 백업).
-      경기번호·매트·예상시간만 다시 맞추려면 오른쪽 버튼을 사용하세요.
-    </p>
-    <div class="admin-actions">
-      <button class="btn btn-primary" id="generateBtn" type="button">명단으로 대진 전체 생성</button>
-      <button class="btn btn-outline" id="rescheduleBtn" type="button">경기번호·시간만 다시 계산</button>
-      <button class="btn btn-outline" id="undoBtn" type="button" disabled>직전 초안 복원</button>
-    </div>
-    <p class="admin-note" id="generateStatus"></p>
-  </div>
-
-  <div class="admin-block">
-    <h2>[ 03-B ] 엑셀 대진 붙여넣기 · 업로드</h2>
-    <p class="desc">
-      <b style="color:var(--white)">대진 시트 양식(스파이더 대진표 엑셀)</b>은 그대로 첨부하면 자동으로 인식합니다.
+      <b style="color:var(--white)">대진표 엑셀(스파이더 대진표 양식)</b>을 그대로 첨부하세요.
       시트 1개가 부문 그룹(중등부·고등부·어덜트 …)이 되고, 각 부문 제목 아래 선수 칸(이름/소속, 부전승, "1경기 패자")을 위→아래 순서대로 읽어
       2·4·5·8·10인 대진과 A·B조 결승을 엑셀과 같은 모양으로 만듭니다. 시트의 "게임수"와 실제 경기 수도 비교해 알려 줍니다.<br>
-      또는 엑셀에 <b style="color:var(--white)">1회전 대진을 행으로 적은 양식</b>(한 행 = 한 경기, 아래 양식 다운로드)도 계속 사용할 수 있습니다.
-      8강·4강·결승 등 다음 라운드와 승자 전파는 사이트가 자동으로 이어 만듭니다.
+      첨부하면 바로 검증 결과가 나오고, 결과 아래 <b style="color:var(--white)">[검증 결과 초안에 반영]</b>을 눌러야 초안에 들어갑니다.
     </p>
-    <div class="paste-hint" id="importHint"></div>
-    <div class="admin-actions" style="margin-top:0; margin-bottom:14px;">
-      <button class="btn btn-outline" id="downloadTemplateBtn" type="button">엑셀 양식 다운로드</button>
-      <label class="btn btn-outline" for="importFile" style="cursor:pointer;">엑셀 파일 첨부</label>
+    <div class="admin-actions" style="margin-top:0;">
+      <label class="btn btn-primary" for="importFile" style="cursor:pointer;">엑셀 파일 첨부</label>
       <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none;">
       <span class="desc" id="importFileName" style="margin:0;"></span>
     </div>
-    <textarea id="importPaste" placeholder="엑셀에서 머리글 행을 포함해 셀 범위를 복사(Ctrl+C)한 뒤 여기에 붙여넣으세요(Ctrl+V)."></textarea>
-    <div class="admin-actions">
-      <button class="btn btn-outline" id="importCheckBtn" type="button">붙여넣은 데이터 검증</button>
+
+    <div class="admin-sub">
+      <h3>또는 엑셀 셀 범위 붙여넣기 <span>(행 양식 · 한 행 = 1회전 한 경기)</span></h3>
+      <p class="desc">
+        엑셀에 <b style="color:var(--white)">1회전 대진을 행으로 적은 양식</b>은 셀 범위를 복사해 붙여넣거나 파일로 첨부할 수 있습니다.
+        위에서부터 적은 순서가 대진도의 위→아래 순서가 되고, 8강·4강·결승 등 다음 라운드와 승자 전파는 사이트가 자동으로 이어 만듭니다.
+      </p>
+      <div class="paste-hint" id="importHint"></div>
+      <textarea id="importPaste" placeholder="엑셀에서 머리글 행을 포함해 셀 범위를 복사(Ctrl+C)한 뒤 여기에 붙여넣으세요(Ctrl+V)."></textarea>
+      <div class="admin-actions">
+        <button class="btn btn-outline" id="importCheckBtn" type="button">붙여넣은 데이터 검증</button>
+        <button class="btn btn-outline" id="downloadTemplateBtn" type="button">엑셀 양식 다운로드</button>
+      </div>
+    </div>
+
+    <div id="importResult"></div>
+    <div class="admin-actions apply-row">
       <div class="field" style="min-width:210px; gap:0;">
         <select id="importMode" aria-label="반영 방식">
           <option value="replace">반영 방식: 전체 교체</option>
@@ -302,68 +268,181 @@
       <button class="btn btn-primary" id="importApplyBtn" type="button" disabled>검증 결과 초안에 반영</button>
       <button class="btn btn-outline" id="importErrorXlsxBtn" type="button" disabled>오류 행만 엑셀로 받기</button>
     </div>
-    <div id="importResult"></div>
   </div>
 
-  <div class="admin-block">
-    <h2>[ 04 ] 부문 · 경기 직접 편집</h2>
-    <p class="desc">
-      선수 배치(1회전), 경기번호, 매트, 예상 경기 시간, 경기시간(분), 진행 상태, 승자와 점수를 직접 수정할 수 있습니다.
-      승자를 선택하면 다음 라운드에 자동 반영되며, 이전 결과를 바꾸면 이후 라운드 결과는 자동으로 무효화됩니다.
-    </p>
-    <div class="field-grid" style="margin-bottom:18px;">
-      <div class="field">
-        <label>부문 선택</label>
-        <select id="divSelect"></select>
-      </div>
-      <div class="field">
-        <label>이 부문 매트</label>
-        <input type="number" min="1" max="12" id="divMat">
-      </div>
-      <div class="field">
-        <label>이 부문 기본 경기시간 (분)</label>
-        <input type="number" min="1" max="60" id="divDuration">
-      </div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <button class="btn btn-outline" id="divDeleteBtn" type="button">이 부문 대진 삭제</button>
-      </div>
-    </div>
-    <div class="edit-table-wrap">
-      <table class="edit-table" id="matchTable"></table>
-    </div>
-    <p class="admin-note" id="divWarn"></p>
-  </div>
-
-  <div class="admin-block">
-    <h2>[ 05 ] 미리보기 (공개 화면과 동일)</h2>
-    <p class="desc">현재 편집 중인 <b style="color:var(--white)">초안</b> 기준입니다. 게시 전까지 공개 화면에는 노출되지 않습니다.</p>
-    <div class="admin-actions" style="margin-top:0;">
-      <button class="btn btn-outline" id="previewBtn" type="button">선택 부문 미리보기</button>
+  <div class="admin-block" id="step2">
+    <h2>② 초안 확인</h2>
+    <p class="desc">현재 초안을 공개 화면과 같은 모양으로 확인합니다. 게시 전까지 공개 화면에는 나오지 않습니다.</p>
+    <div id="draftSummary"></div>
+    <p class="admin-note" id="generateStatus"></p>
+    <div class="admin-actions">
       <button class="btn btn-outline" id="previewAllBtn" type="button">전체 미리보기</button>
+      <button class="btn btn-outline" id="undoBtn" type="button" disabled>직전 초안 복원</button>
     </div>
     <div id="previewBox"></div>
   </div>
 
-  <div class="admin-block">
-    <h2>[ 06 ] 저장 · 게시 · 내보내기</h2>
+  <div class="admin-block" id="step3">
+    <h2>③ 사이트에 게시</h2>
     <p class="desc">
-      <b style="color:var(--white)">초안 저장</b>은 편집 내용만 서버에 보관합니다(공개 화면 변화 없음).
-      <b style="color:var(--white)">게시</b>를 눌러야 공개 대진표 페이지에 실시간으로 반영됩니다.
+      <b style="color:var(--white)">게시</b>를 누르면 공개 대진표 페이지에 바로 반영됩니다.
+      <b style="color:var(--white)">초안 저장</b>은 공개 화면을 바꾸지 않고 서버에만 보관합니다.
     </p>
     <div class="admin-actions" style="margin-top:0;">
-      <button class="btn btn-outline" id="saveDraftBtn" type="button">초안 저장</button>
       <button class="btn btn-primary" id="publishBtn" type="button">지금 사이트에 게시하기</button>
+      <button class="btn btn-outline" id="saveDraftBtn" type="button">초안 저장</button>
+      <span class="status-line" id="publishStatus">불러오는 중…</span>
+    </div>
+    <p class="admin-note" id="publishHint"></p>
+    <div class="admin-actions admin-actions-sub">
       <button class="btn btn-outline" id="unpublishBtn" type="button">게시 취소(비우기)</button>
       <button class="btn btn-outline" id="exportXlsxBtn" type="button">대진 Excel 다운로드</button>
       <button class="btn btn-outline" id="exportJsonBtn" type="button">JSON 백업</button>
       <button class="btn btn-outline" id="loadDraftBtn" type="button">서버 초안 다시 불러오기</button>
     </div>
-    <div class="admin-actions">
-      <span class="status-line" id="publishStatus">불러오는 중…</span>
-    </div>
     <div class="history-list" id="historyList"></div>
   </div>
+
+  <details class="admin-fold" data-remember="resultFold">
+    <summary><span>대회 당일 결과 입력 · 부문 직접 편집</span><small>승자·점수·진행 상태 입력, 선수 배치·매트·경기시간 수정</small></summary>
+    <div class="admin-fold-body">
+      <p class="desc">
+        선수 배치(1회전), 경기번호, 매트, 예상 경기 시간, 경기시간(분), 진행 상태, 승자와 점수를 직접 수정할 수 있습니다.
+        승자를 선택하면 다음 라운드에 자동 반영되며, 이전 결과를 바꾸면 이후 라운드 결과는 자동으로 무효화됩니다.
+        입력한 뒤 ③에서 <b style="color:var(--white)">[지금 사이트에 게시하기]</b>를 눌러야 공개 화면에 반영됩니다.
+      </p>
+      <div class="field-grid" style="margin-bottom:18px;">
+        <div class="field">
+          <label>부문 선택</label>
+          <select id="divSelect"></select>
+        </div>
+        <div class="field">
+          <label>이 부문 매트</label>
+          <input type="number" min="1" max="12" id="divMat">
+        </div>
+        <div class="field">
+          <label>이 부문 기본 경기시간 (분)</label>
+          <input type="number" min="1" max="60" id="divDuration">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn btn-outline" id="previewBtn" type="button">선택 부문 미리보기</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn btn-outline" id="divDeleteBtn" type="button">이 부문 대진 삭제</button>
+        </div>
+      </div>
+      <div class="edit-table-wrap">
+        <table class="edit-table" id="matchTable"></table>
+      </div>
+      <p class="admin-note" id="divWarn"></p>
+    </div>
+  </details>
+
+  <details class="admin-fold" data-remember="advFold">
+    <summary><span>고급 기능</span><small>참가자 명단으로 대진 자동 생성 · 대진 설정 (엑셀로 대진을 올릴 때는 쓰지 않음)</small></summary>
+    <div class="admin-fold-body">
+
+      <section class="admin-sub">
+        <h3>참가자 명단 연동</h3>
+        <p class="desc">
+          자동 생성은 <b style="color:var(--white)">선수 명단 관리자</b>에 등록된 참가자를 그대로 사용합니다(별도 입력 불필요).
+          명단의 분류 항목 중 어느 것이 연령부·성별·등급·체급인지 아래에서 지정하세요. 이 조합이 하나의 부문이 됩니다.
+        </p>
+        <div class="field-grid">
+          <div class="field">
+            <label>연령부</label>
+            <select data-map="age"></select>
+          </div>
+          <div class="field">
+            <label>성별</label>
+            <select data-map="gender"></select>
+          </div>
+          <div class="field">
+            <label>등급 / 벨트</label>
+            <select data-map="grade"></select>
+          </div>
+          <div class="field">
+            <label>체급</label>
+            <select data-map="weight"></select>
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-outline" id="reloadRosterBtn" type="button">명단 다시 불러오기</button>
+          <span class="status-line" id="rosterStatus">명단을 불러오는 중…</span>
+        </div>
+        <div class="div-list" id="divPreview"></div>
+      </section>
+
+      <section class="admin-sub">
+        <h3>대진 설정</h3>
+        <p class="desc">아래 값은 대진 자동 생성과 경기번호·예상 시간 계산에 사용됩니다. 생성 후에도 개별 경기에서 덮어쓸 수 있습니다.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label>기본 경기시간 (분)</label>
+            <input type="number" min="1" max="60" data-set="defaultDuration">
+          </div>
+          <div class="field">
+            <label>한 조 최대 인원</label>
+            <input type="number" min="2" max="64" data-set="maxPoolSize">
+            <span class="hint">초과 시 A·B·C… 조로 균등 분할</span>
+          </div>
+          <div class="field">
+            <label>매트 수</label>
+            <input type="number" min="1" max="12" data-set="mats">
+          </div>
+          <div class="field">
+            <label>1경기 시작 시각</label>
+            <input type="text" placeholder="10:00" data-set="startTime">
+          </div>
+          <div class="field">
+            <label>경기 사이 여유 (분)</label>
+            <input type="number" min="0" max="30" data-set="gapMin">
+          </div>
+          <div class="field">
+            <label>경기번호 방식</label>
+            <select data-set="numbering">
+              <option value="global">대회 전체 연번</option>
+              <option value="mat">매트별 연번 (1-1, 1-2…)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>3위 결정</label>
+            <select data-set="thirdPlace">
+              <option value="shared">공동 3위 (준결승 패자)</option>
+              <option value="match">3위 결정전 진행</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>같은 소속팀 1회전 회피</label>
+            <select data-set="avoidSameTeam">
+              <option value="1">사용</option>
+              <option value="0">사용 안 함</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>대진 추첨 시드값</label>
+            <input type="number" data-set="randomSeed">
+            <span class="hint">같은 값이면 같은 대진이 재현됩니다</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-sub">
+        <h3>대진 자동 생성</h3>
+        <p class="desc">
+          <b style="color:var(--white)">전체 재생성</b>은 현재 초안의 선수 배치와 입력된 경기 결과를 모두 새로 만듭니다(직전 초안은 자동 백업되어 ②의 [직전 초안 복원]으로 되돌릴 수 있음).
+          경기번호·매트·예상시간만 다시 맞추려면 오른쪽 버튼을 사용하세요.
+        </p>
+        <div class="admin-actions">
+          <button class="btn btn-outline" id="generateBtn" type="button">명단으로 대진 전체 생성</button>
+          <button class="btn btn-outline" id="rescheduleBtn" type="button">경기번호·시간만 다시 계산</button>
+        </div>
+      </section>
+
+    </div>
+  </details>
 
 </div>
 
@@ -411,6 +490,6 @@
 <script src="assets/js/bracket-core.js?v=2"></script>
 <script src="assets/js/bracket-render.js?v=3"></script>
 <script src="assets/js/bracket-import.js?v=2"></script>
-<script src="assets/js/admin-bracket.js?v=3"></script>
+<script src="assets/js/admin-bracket.js?v=4"></script>
 </body>
 </html>
