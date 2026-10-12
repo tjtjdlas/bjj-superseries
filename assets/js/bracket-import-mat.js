@@ -18,7 +18,8 @@
   var POOL_WINNER_RE = /^([A-Z])조우승자$/i;
   var LOSER_RE = /^(\d+)경기패자$/;
   // 경기번호 칸: "1매트 34" 또는 "1 - 33"(매트 - 번호)
-  var MATCH_NO_RES = [/^(\d+)\s*매트\s*(\d+)$/, /^(\d+)\s*-\s*(\d+)$/];
+  // ("8먀트 11" 같은 오타도 받아 준다)
+  var MATCH_NO_RES = [/^(\d+)\s*[매먀]트\s*(\d+)$/, /^(\d+)\s*-\s*(\d+)$/];
   var BYE_WORDS = ['bye', '부전승', '부전', '-', '—', '없음', 'x'];
   var AGE_WORDS = ['키즈', '유소년', '초등부', '중등부', '고등부', '어덜트', '노기', '마스터'];
   var LABEL_MAX_GAP = 2.5; // 경기번호 칸과 경기 연결 지점 사이 허용 거리(행)
@@ -371,11 +372,11 @@
     var labelOf = {}; // match id → 경기번호 칸
     var candidates = []; // 경기번호 칸을 붙일 수 있는 경기 위치
 
-    function addCandidates(t, matches, rows) {
+    function addCandidates(t, matches, rows, divId) {
       var jr = junctionRows(matches, rows);
       matches.forEach(function (m) {
         if (jr[m.id] == null) return;
-        candidates.push({ t: t, sheet: t.sheet, id: m.id, row: jr[m.id], round: m.round });
+        candidates.push({ t: t, sheet: t.sheet, id: m.id, row: jr[m.id], round: m.round, divId: divId });
       });
     }
 
@@ -421,7 +422,7 @@
         }
         var matches = (entries.length > 1 || p.tbd) ? built.matches : [];
         p.drawings.forEach(function (t) {
-          addCandidates(t, matches, t.slots.filter(function (x) { return x.kind !== 'empty' || p.tbd; }).map(function (x) { return x.row; }));
+          addCandidates(t, matches, t.slots.filter(function (x) { return x.kind !== 'empty' || p.tbd; }).map(function (x) { return x.row; }), divId);
         });
         poolInfo[poolName] = { drawings: p.drawings, matches: matches };
         return {
@@ -453,7 +454,7 @@
         finals = B.buildFinals(divId, sorted, s);
         g.finals.forEach(function (t) {
           var rows = t.finalSlots.map(function (x) { return x.row; });
-          if (rows.length === B.nextPow2(sorted.length)) addCandidates(t, finals, rows);
+          if (rows.length === B.nextPow2(sorted.length)) addCandidates(t, finals, rows, divId);
         });
         if (g.finals.length > 1) {
           warn(g.finals[1].sheet.name + ' ' + g.finals[1].addr, '부문 제목', g.finals[1].info.title, '같은 부문의 결승 대진이 여러 번 그려져 있어 첫 번째 것을 기준으로 했습니다.', '');
@@ -494,38 +495,124 @@
     });
 
     /* 4) 경기번호 칸 → 경기 (가장 가까운 연결 지점부터 하나씩) */
+    var allById = B.indexMatches({ divisions: divisions });
+    var divOfMatch = {};
+    divisions.forEach(function (d) {
+      B.allMatches(d).forEach(function (m) { divOfMatch[m.id] = d; });
+    });
+    // 부전승으로 치르지 않는 경기에는 번호를 붙이지 않는다
+    candidates.forEach(function (cd) { cd.skipped = B.isSkippedMatch(allById[cd.id], allById); });
+
+    function inRegion(lb, t) {
+      return lb.c > t.c && lb.c <= t.c2 + 2 && lb.r > t.r2 && lb.r <= t.maxRow + 2;
+    }
+
+    // "B조 8강(김형욱 vs 남우진)" 형태의 경기 설명
+    function describe(id) {
+      var m = allById[id];
+      var d = divOfMatch[id] || null;
+      var entries = d ? B.entryIndex(d) : {};
+      var who = B.resolveSlots(m, allById).map(function (o) {
+        if (o.kind === 'entry') return (entries[o.entryId] || {}).name || '?';
+        if (o.kind === 'bye') return '부전승';
+        return o.fromLabel || '미정';
+      }).join(' vs ');
+      var pool = (m.pool === 'F') ? '' : ((d && d.pools.length > 1) ? m.pool + '조 ' : '');
+      return pool + (m.label || '경기') + '(' + who + ')';
+    }
+
+    var votes = {}; // match id → [{ lb, sheet }]
+    function vote(id, lb, sheet) {
+      lb.used = true;
+      (votes[id] = votes[id] || []).push({ lb: lb, sheet: sheet });
+    }
+
     var pairs = [];
     sheets.forEach(function (sh) {
       sh.labels.forEach(function (lb) {
         candidates.forEach(function (cd) {
-          if (cd.sheet !== sh) return;
-          var t = cd.t;
-          if (lb.c <= t.c || lb.c > t.c2 + 2) return;
-          if (lb.r <= t.r2 || lb.r > t.maxRow + 2) return;
+          if (cd.sheet !== sh || cd.skipped || !inRegion(lb, cd.t)) return;
           var gap = Math.abs(lb.r - cd.row);
           if (gap > LABEL_MAX_GAP) return;
-          pairs.push({ lb: lb, cd: cd, cost: gap + cd.round * 0.001 + (lb.c > t.c2 ? 0.5 : 0) });
+          pairs.push({ lb: lb, cd: cd, cost: gap + cd.round * 0.001 + (lb.c > cd.t.c2 ? 0.5 : 0) });
         });
       });
     });
     pairs.sort(function (a, b) { return a.cost - b.cost; });
-    var usedLabel = [];
-    var usedSpot = [];
+    var usedSpot = {};
     pairs.forEach(function (x) {
-      if (usedLabel.indexOf(x.lb) !== -1) return;
-      var spot = x.cd.t.addr + '|' + x.cd.sheet.name + '|' + x.cd.id;
-      if (usedSpot.indexOf(spot) !== -1) return;
-      usedLabel.push(x.lb);
-      usedSpot.push(spot);
-      x.lb.used = true;
-      var prev = labelOf[x.cd.id];
-      if (!prev) {
-        labelOf[x.cd.id] = { mat: x.lb.mat, no: x.lb.no, where: x.cd.sheet.name + ' ' + x.lb.addr, text: x.lb.text };
-      } else if (prev.mat !== x.lb.mat || prev.no !== x.lb.no) {
-        warn(x.cd.sheet.name + ' ' + x.lb.addr, '경기번호', x.lb.text,
-          '같은 경기에 다른 시트(' + prev.where + ')에서는 "' + prev.text + '"로 적혀 있습니다. 먼저 나온 번호를 썼습니다.',
-          '여러 매트 시트에 그린 같은 대진의 경기번호를 똑같이 맞춰 주세요.');
+      if (x.lb.used) return;
+      var spot = x.cd.sheet.name + '|' + x.cd.t.addr + '|' + x.cd.id;
+      if (usedSpot[spot]) return;
+      usedSpot[spot] = true;
+      vote(x.cd.id, x.lb, x.cd.sheet);
+    });
+
+    // 번호 칸이 부전승 경기 자리에 적힌 경우 → 실제로 치르는 경기로 옮긴다
+    //  - 부전승 경기에 올라오는 쪽이 다른 경기의 승자면 그 경기
+    //  - 아니면 같은 대진·같은 라운드에서 번호가 없는 경기가 하나뿐일 때 그 경기
+    sheets.forEach(function (sh) {
+      sh.labels.forEach(function (lb) {
+        if (lb.used) return;
+        var near = null;
+        candidates.forEach(function (cd) {
+          if (cd.sheet !== sh || !cd.skipped || !inRegion(lb, cd.t)) return;
+          var gap = Math.abs(lb.r - cd.row);
+          if (gap <= LABEL_MAX_GAP && (!near || gap < near.gap)) near = { cd: cd, gap: gap };
+        });
+        if (!near) return;
+        var cd = near.cd;
+        var drawn = candidates.filter(function (x) { return x.t === cd.t && !x.skipped; });
+        var free = function (x) {
+          return !(votes[x.id] || []).some(function (v) { return v.sheet === sh; });
+        };
+        var target = null;
+        (allById[cd.id].slots || []).forEach(function (sl) {
+          if (sl.from && !sl.loser) {
+            var src = drawn.filter(function (x) { return x.id === sl.from; })[0];
+            if (src && free(src)) target = src;
+          }
+        });
+        if (!target) {
+          var same = drawn.filter(function (x) { return x.round === cd.round && free(x); });
+          if (same.length === 1) target = same[0];
+        }
+        if (!target) return;
+        vote(target.id, lb, sh);
+        warn(sh.name + ' ' + lb.addr, '경기번호', lb.text,
+          '번호 칸이 부전승 경기 자리에 있어, 같은 대진의 ' + describe(target.id) + ' 경기 번호로 반영했습니다.',
+          '맞는지 확인하고, 엑셀에서도 번호 칸을 그 경기 옆으로 옮겨 주세요.');
+      });
+    });
+
+    // 같은 경기에 서로 다른 번호가 적힌 경우(여러 시트에 그린 같은 대진):
+    // 다른 경기와 겹치지 않는 번호 → 그 매트 시트에 적힌 번호 → 먼저 나온 번호 순으로 고른다.
+    var claim = {};
+    Object.keys(votes).forEach(function (id) {
+      votes[id].forEach(function (v) {
+        var k = v.lb.mat + '|' + v.lb.no;
+        (claim[k] = claim[k] || {})[id] = true;
+      });
+    });
+    Object.keys(votes).forEach(function (id) {
+      var list = votes[id];
+      var distinct = list.filter(function (v, i) {
+        return !list.slice(0, i).some(function (w) { return w.lb.mat === v.lb.mat && w.lb.no === v.lb.no; });
+      });
+      var pick = distinct[0];
+      if (distinct.length > 1) {
+        var score = function (v) {
+          var clash = Object.keys(claim[v.lb.mat + '|' + v.lb.no]).length > 1 ? 2 : 0;
+          return clash + (v.sheet.mat === v.lb.mat ? 0 : 1);
+        };
+        pick = distinct.slice().sort(function (a, b) { return score(a) - score(b); })[0];
+        var others = distinct.filter(function (v) { return v !== pick; });
+        warn(pick.sheet.name + ' ' + pick.lb.addr, '경기번호', pick.lb.text,
+          describe(id) + ' 경기 번호가 ' + others.map(function (v) { return v.sheet.name + ' ' + v.lb.addr + '에는 "' + v.lb.text + '"'; }).join(', ') +
+          '로 다르게 적혀 있어 "' + pick.lb.text + '"를 썼습니다.',
+          '여러 곳에 그린 같은 대진의 경기번호를 똑같이 맞춰 주세요.');
       }
+      labelOf[id] = { mat: pick.lb.mat, no: pick.lb.no, where: pick.sheet.name + ' ' + pick.lb.addr, text: pick.lb.text };
     });
 
     // 연결되지 않은 경기번호 칸 (같은 대진을 여러 시트에 그린 경우 한 번만 알림)
@@ -538,13 +625,22 @@
           if (lb.c > t.c && lb.c <= t.c2 + 2 && lb.r > t.r2 && lb.r <= t.maxRow + 2) near = t;
         });
         var name = near ? near.info.title : '';
+        var byeSpot = candidates.some(function (cd) {
+          return cd.sheet === sh && cd.skipped && inRegion(lb, cd.t) && Math.abs(lb.r - cd.row) <= LABEL_MAX_GAP;
+        });
         var k = name + '|' + lb.text;
         if (looseSeen[k]) { looseSeen[k].n++; return; }
-        looseSeen[k] = { n: 1, where: sh.name + ' ' + lb.addr, text: lb.text, name: name };
+        looseSeen[k] = { n: 1, where: sh.name + ' ' + lb.addr, text: lb.text, name: name, bye: byeSpot };
       });
     });
     Object.keys(looseSeen).forEach(function (k) {
       var x = looseSeen[k];
+      if (x.bye) {
+        warn(x.where, '경기번호', x.text,
+          '"' + x.name + '" 대진의 부전승 경기(실제로 치르지 않는 경기) 자리에 있는 번호라 반영하지 않았습니다.',
+          '이 번호로 치를 경기가 있다면 엑셀에서 번호 칸을 그 경기 옆으로 옮겨 주세요.');
+        return;
+      }
       warn(x.where, '경기번호', x.text,
         (x.name ? '"' + x.name + '" 대진 옆에 있지만 ' : '') + '어느 경기 자리인지 알 수 없어 반영하지 않았습니다' + (x.n > 1 ? ' (시트 ' + x.n + '곳 동일)' : '') + '.',
         '경기번호 칸을 해당 경기의 두 선수 칸 사이(연결선 옆)에 두세요. 3위 결정전 등 따로 치르는 경기라면 알려 주세요.');
@@ -615,6 +711,28 @@
       d.mat = mats.length === 1 ? mats[0] : null;
       d._order = [sheetIdx[names[0]], pos[names[0]]];
     });
+
+    // 경기번호를 대부분의 경기에 적은 엑셀이면, 번호가 빠진 경기를 알려 준다
+    var realCount = 0;
+    var numCount = 0;
+    var missing = [];
+    divisions.forEach(function (d) {
+      var list = [];
+      B.allMatches(d).forEach(function (m) {
+        if (B.isSkippedMatch(m, allById)) return;
+        realCount++;
+        if (m.no) numCount++;
+        else if (!d.pending) list.push(m.id);
+      });
+      if (list.length) missing.push({ d: d, ids: list });
+    });
+    if (realCount && numCount / realCount >= 0.5) {
+      missing.forEach(function (x) {
+        warn(x.d.sheets.join('·') + ' ' + x.d.cell, '경기번호', x.d.title,
+          '경기번호가 없는 경기 ' + x.ids.length + '개: ' + x.ids.map(describe).join(', '),
+          '엑셀에 번호 칸("5매트 12")을 넣으면 공개 화면에 번호가 표시됩니다. 대진은 그대로 반영됩니다.');
+      });
+    }
 
     // 정렬: 처음 나오는 매트 시트 → 그 시트에서의 위치
     divisions.sort(function (a, b) { return (a._order[0] - b._order[0]) || (a._order[1] - b._order[1]); });

@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var resetBtn = document.querySelector('#bracketResetBtn');
   var printBtn = document.querySelector('#bracketPrintBtn');
   var shareBtn = document.querySelector('#bracketShareBtn');
+  var viewEl = document.querySelector('#bracketView');
   if (!listEl) return;
 
   // 탭(엑셀 시트: 1매트 / 2매트 … 또는 중등부 / 고등부 …) 안에서 쓰는 세부 필터.
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var query = '';
   var mineOnly = true;
   var loaded = false;
+  var view = 'tree'; // 'tree' = 대진표, 'order' = 경기 순서(매트별 경기번호 순)
 
   /* ---------- URL 상태 ---------- */
 
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     query = p.get('q') || '';
     if (p.get('mine') === '0') mineOnly = false;
+    view = p.get('v') === 'order' ? 'order' : 'tree';
     if (searchEl) searchEl.value = query;
   }
 
@@ -57,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
     FIELDS.forEach(function (f) { if (filters[f.key]) p.set(f.key, filters[f.key]); });
     if (query) p.set('q', query);
     if (query && !mineOnly) p.set('mine', '0');
+    if (view === 'order' && orderAvailable()) p.set('v', 'order');
     var qs = p.toString();
     history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
   }
@@ -194,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loaded = true;
     ensureGroup();
     buildTabs();
+    buildView();
     buildFilters();
     showPublishedAt(publishedAt);
     render();
@@ -336,6 +341,11 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    if (view === 'order' && orderAvailable()) {
+      renderOrder();
+      return;
+    }
+
     var all = searchingAll();
     var pool = state.divisions.filter(function (d) { return passesFilters(d, all); });
     if (!all) pool = sortForGroup(pool);
@@ -380,6 +390,148 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (query) focusFirstHit();
+  }
+
+  /* ---------- 경기 순서 (매트별 경기번호 순 목록) ---------- */
+
+  // 매트별 엑셀에 경기번호가 적혀 있을 때만 "경기 순서" 보기를 쓴다
+  function orderAvailable() {
+    return state.divisions.some(function (d) {
+      return d.sheets && d.sheets.length && B.allMatches(d).some(function (m) { return m.no; });
+    });
+  }
+
+  function buildView() {
+    if (!viewEl) return;
+    var on = orderAvailable();
+    viewEl.hidden = !on;
+    if (!on) { view = 'tree'; return; }
+    viewEl.querySelectorAll('[data-view]').forEach(function (btn) {
+      var active = btn.dataset.view === view;
+      btn.classList.toggle('is-on', active);
+      btn.setAttribute('aria-pressed', String(active));
+      btn.onclick = function () {
+        if (view === btn.dataset.view) return;
+        view = btn.dataset.view;
+        buildView();
+        writeUrl();
+        render();
+      };
+    });
+  }
+
+  function mark(text, q) {
+    var t = String(text == null ? '' : text);
+    if (!q || !R.matchesQuery(t, q)) return esc(t);
+    var idx = t.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return '<mark>' + esc(t) + '</mark>'; // 초성 검색
+    return esc(t.slice(0, idx)) + '<mark>' + esc(t.slice(idx, idx + q.length)) + '</mark>' + esc(t.slice(idx + q.length));
+  }
+
+  function stageOf(d, m) {
+    if (m.pool === 'F') return m.label === '최종 결승' ? '최종 결승' : '결선 ' + (m.label || '');
+    return ((d.pools || []).length > 1 ? m.pool + '조 ' : '') + (m.label || '');
+  }
+
+  function matTab(mat) {
+    var name = null;
+    groupList().forEach(function (g) { if (!name && matOfGroup(g.name) === mat) name = g.name; });
+    return name;
+  }
+
+  function jumpToMatch(id, mat) {
+    if (!searchingAll()) {
+      var tab = matTab(mat);
+      if (tab) group = tab;
+    }
+    view = 'tree';
+    buildTabs();
+    buildView();
+    buildFilters();
+    writeUrl();
+    render();
+    var card = document.getElementById('m-' + id);
+    if (!card) return;
+    card.classList.add('is-flash');
+    setTimeout(function () { card.classList.remove('is-flash'); }, 2600);
+    var box = card.closest('.bkt-scroll');
+    if (box) box.scrollLeft = Math.max(0, card.offsetLeft - (box.clientWidth - card.offsetWidth) / 2);
+    var top = card.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2) + 80;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+
+  function renderOrder() {
+    var all = searchingAll();
+    var tabMat = matOfGroup(group);
+    var rows = [];
+    var hits = 0;
+
+    state.divisions.forEach(function (d, di) {
+      if (!passesFilters(d, true)) return;
+      var entries = B.entryIndex(d);
+      B.allMatches(d).forEach(function (m) {
+        if (!m.mat || B.isSkippedMatch(m, byId)) return;
+        if (!all && m.mat !== tabMat) return;
+        var hit = false;
+        var winner = B.winnerOf(m, byId);
+        var sides = B.resolveSlots(m, byId).map(function (o, i) {
+          if (o.kind === 'entry') {
+            var e = entries[o.entryId] || { name: '?', team: '' };
+            if (query && (R.matchesQuery(e.name, query) || R.matchesQuery(e.team, query))) hit = true;
+            return '<span class="bkt-order-p' + (winner ? (winner === o.entryId ? ' is-win' : ' is-lose') : '') + '">' +
+              '<b>' + mark(e.name, query) + '</b><small>' + mark(e.team || '-', query) + '</small></span>';
+          }
+          var raw = (m.slots && m.slots[i]) || {};
+          var txt = o.kind === 'bye' ? '부전승' : (o.fromLabel || (raw.tbd ? '추후 공개' : '진출자 미정'));
+          return '<span class="bkt-order-p is-tbd"><b>' + esc(txt) + '</b></span>';
+        });
+        if (all && !hit) return;
+        if (hit) hits++;
+        var status = (m.status && m.status !== '예정') ? m.status : '';
+        rows.push({
+          mat: m.mat,
+          no: m.no ? Number(m.no) : Infinity,
+          di: di,
+          order: m.round * 100 + m.order,
+          html: '<button type="button" class="bkt-order-row' + (hit ? ' is-hit' : '') + (status === '종료' ? ' is-done' : '') + '"' +
+              ' data-mid="' + esc(m.id) + '" data-mat="' + esc(m.mat) + '">' +
+            '<span class="bkt-order-no">' + (m.no ? '#' + esc(m.no) : '-') + (all ? '<small>MAT ' + esc(m.mat) + '</small>' : '') + '</span>' +
+            '<span class="bkt-order-div">' + esc(d.title) + '<em>' + esc(stageOf(d, m)) + '</em></span>' +
+            '<span class="bkt-order-vs">' + sides[0] + '<i>vs</i>' + sides[1] + '</span>' +
+            (status ? '<span class="bkt-order-st' + (status === '진행' ? ' is-live' : '') + '">' + esc(status) + '</span>' : '') +
+          '</button>'
+        });
+      });
+    });
+
+    // 매트 → 경기번호 순. 번호가 없는 경기는 맨 뒤(부문 순서대로)
+    rows.sort(function (a, b) { return (a.mat - b.mat) || (a.no - b.no) || (a.di - b.di) || (a.order - b.order); });
+
+    if (!rows.length) {
+      listEl.innerHTML = emptyBox(query ? '"' + query + '" 에 해당하는 경기를 찾지 못했습니다.' : '이 매트에 표시할 경기가 없습니다.',
+        '이름의 일부만 입력하거나(초성 검색 가능), 필터를 초기화한 뒤 다시 찾아보세요.');
+    } else {
+      listEl.innerHTML = '<div class="bkt-order">' + rows.map(function (r) { return r.html; }).join('') + '</div>' +
+        '<p class="bkt-note bkt-print-hide">경기를 누르면 대진표에서 그 경기 위치를 보여 줍니다.</p>';
+    }
+
+    if (countEl) {
+      countEl.textContent = all
+        ? '전체 매트에서 검색 · 일치 경기 ' + rows.length + '개'
+        : group + ' 경기 순서 · ' + rows.length + '경기' + (query ? ' · 검색 일치 ' + hits + '경기' : '');
+    }
+
+    listEl.querySelectorAll('.bkt-order-row').forEach(function (btn) {
+      btn.addEventListener('click', function () { jumpToMatch(btn.dataset.mid, Number(btn.dataset.mat)); });
+    });
+
+    if (query) {
+      var first = listEl.querySelector('.bkt-order-row.is-hit');
+      if (first) {
+        var y = first.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2) + 40;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }
   }
 
   function focusFirstHit() {
