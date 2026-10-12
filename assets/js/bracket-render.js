@@ -98,11 +98,13 @@
     }).join('');
 
     var status = skipped ? '부전승' : (match.status || '예정');
+    // 경기번호를 대진 선 위에 적는 경우("1매트 5")에는 카드 머리에 번호·매트를 반복하지 않는다
+    var onLine = !!(ctx.lineNos && match.no);
     var head =
       '<div class="bkt-match-head">' +
         '<span class="bkt-label">' + esc(match.label || '') + '</span>' +
-        (match.no ? '<span class="bkt-no">#' + esc(match.no) + '</span>' : '') +
-        (showMat ? '<span class="bkt-mat">MAT ' + esc(match.mat) + '</span>' : '') +
+        (match.no && !onLine ? '<span class="bkt-no">#' + esc(match.no) + '</span>' : '') +
+        (showMat && !onLine ? '<span class="bkt-mat">MAT ' + esc(match.mat) + '</span>' : '') +
         (status !== '예정' ? '<span class="bkt-status ' + statusClass(status) + '">' + esc(status) + '</span>' : '') +
         (SHOW_TIME && match.time ? '<span class="bkt-time" title="예상 경기 시간">' + esc(match.time) + '</span>' : '') +
         (match.duration && !skipped ? '<span class="bkt-dur">' + esc(match.duration) + '분</span>' : '') +
@@ -219,12 +221,37 @@
         ';top:' + slotY + ';"></span>';
   }
 
+  // 엑셀처럼 경기에서 다음 경기로 나가는 선 위에 경기번호를 적는다("1매트 5").
+  // 다음 경기가 이 대진도 안에 없으면(결승·조 결승) 짧은 선을 그어 그 위에 적는다.
+  // 위쪽에서 내려가는 선은 선 위에, 아래쪽에서 올라가는 선은 선 아래에 적어 꺾인 선과 겹치지 않게 한다.
+  function lineNoHtml(m, p, link, lay, ctx) {
+    var left = calcExpr([[p.c + 1, CW], [p.c, GX]]);
+    var top = calcExpr([[p.y + 0.5, UH]]);
+    var below = false;
+    var tail = '';
+    if (link) {
+      var dy = lay.pos[link.pid].y - p.y;
+      below = !(dy > 0 || (dy === 0 && link.slot === 1));
+    } else {
+      tail = '<span class="bkt-link is-tail" style="left:' + left + ';top:' + top + ';"></span>';
+    }
+    var elsewhere = ctx.mat && m.mat && m.mat !== ctx.mat;
+    return tail + '<span class="bkt-lineno ' + (below ? 'is-below' : 'is-above') + (elsewhere ? ' is-elsewhere' : '') + '"' +
+      ' style="left:' + left + ';top:' + top + ';">' + esc((m.mat ? m.mat + '매트 ' : '#') + m.no) + '</span>';
+  }
+
   function renderTree(matches, ctx) {
     if (!matches || !matches.length) return { html: '', hit: false };
     var lay = layoutTree(matches);
     var anyHit = false;
     var cards = '';
     var links = '';
+    var nos = '';
+    var withNos = !!ctx.lineNos && matches.some(function (m) { return m.no; });
+    var parentOf = {};
+    Object.keys(lay.feeders).forEach(function (pid) {
+      lay.feeders[pid].forEach(function (f) { parentOf[f.id] = { pid: pid, slot: f.slot }; });
+    });
 
     matches.forEach(function (m) {
       var p = lay.pos[m.id];
@@ -234,11 +261,12 @@
       lay.feeders[m.id].forEach(function (f) {
         links += connectorHtml(lay.pos[f.id], p, f.slot);
       });
+      if (withNos && m.no) nos += lineNoHtml(m, p, parentOf[m.id], lay, ctx);
     });
 
     return {
-      html: '<div class="bkt-scroll"><div class="bkt-tree" style="--cols:' + lay.cols + ';--rows:' + lay.rows + ';">' +
-        links + cards + '</div></div>',
+      html: '<div class="bkt-scroll"><div class="bkt-tree' + (withNos ? ' has-nos' : '') + '" style="--cols:' + lay.cols + ';--rows:' + lay.rows + ';">' +
+        links + nos + cards + '</div></div>',
       hit: anyHit
     };
   }
@@ -278,7 +306,8 @@
       entries: B.entryIndex(division),
       query: opts.query || '',
       mat: byMat ? (opts.mat || null) : null,
-      divMat: byMat ? division.mat : null
+      divMat: byMat ? division.mat : null,
+      lineNos: byMat
     };
     var mats = (byMat && division.mats) || [];
 

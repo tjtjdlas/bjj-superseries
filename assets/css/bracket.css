@@ -246,6 +246,23 @@
 .bkt-link.is-up{ border-bottom-width:1px; border-right-width:1px; }
 .bkt-link.is-in{ width:calc(var(--gx) / 2); height:0; border-top-width:1px; }
 
+/* 대진 선 위 경기번호 ("1매트 5") — 매트별 대진표 */
+.bkt-tree.has-nos{
+  --gx:64px;
+  width:calc(var(--cols) * (var(--cw) + var(--gx)) - var(--gx) + 72px);
+}
+.bkt-link.is-tail{ width:calc(var(--gx) / 2 + 18px); height:0; border-top-width:1px; }
+.bkt-lineno{
+  position:absolute;
+  margin-left:6px;
+  font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:0.2px;
+  color:var(--white); white-space:nowrap; line-height:1;
+  pointer-events:none;
+}
+.bkt-lineno.is-above{ transform:translateY(calc(-100% - 4px)); }
+.bkt-lineno.is-below{ transform:translateY(4px); }
+.bkt-lineno.is-elsewhere{ color:var(--gold); opacity:0.55; }
+
 /* ---------- 매치 카드 ---------- */
 .bkt-match{
   position:relative;
@@ -398,6 +415,8 @@
   .bkt-toolbar{ position:static; padding:14px 0 12px; margin-bottom:24px; }
   .bkt-division-title{ font-size:15px; width:100%; }
   .bkt-tree{ --cw:172px; --gx:24px; --sh:42px; --uh:116px; }
+  .bkt-tree.has-nos{ --gx:58px; }
+  .bkt-lineno{ font-size:10px; margin-left:4px; }
   .bkt-name{ font-size:12.5px; }
   .bkt-match-head{ gap:6px; padding:0 9px; }
   .bkt-slot{ padding:0 9px; gap:7px; }
@@ -433,6 +452,7 @@
   .bkt-slot.is-winner{ background:#eee !important; }
   .bkt-slot.is-winner::before{ background:#111 !important; }
   .bkt-link{ border-color:#999 !important; }
+  .bkt-lineno{ color:#111 !important; opacity:1 !important; }
   .bkt-order-row{ background:#fff !important; box-shadow:0 0 0 1px #bbb !important; break-inside:avoid; }
   .bkt-order-no, .bkt-order-div, .bkt-order-p b{ color:#111 !important; }
   .bkt-order-div em, .bkt-order-p small{ color:#555 !important; }
