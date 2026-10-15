@@ -188,12 +188,41 @@
   .admin-fold > summary:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; border-radius:var(--r-lg); }
   .admin-fold-body{ padding:0 32px 32px; }
   .admin-fold-body > .admin-sub:first-child{ border-top:none; margin-top:0; padding-top:0; }
+  /* 결과 입력 · 직접 편집 */
+  .admin-fold-body > .desc{ margin-bottom:20px; }
+  .div-find{ margin-bottom:16px; }
+  .field-span{ grid-column:span 2; }
+  .field label span{ text-transform:none; letter-spacing:0; color:var(--mute); }
+  .edit-table.entry-table{ min-width:640px; }
+  .entry-table .cell-place{ font-size:11.5px; color:var(--mute); }
+  .entry-table .cell-place.is-free{ color:var(--gold); }
+  .entry-table .row-btn{
+    background:none; border:1px solid var(--line); border-radius:var(--r-pill); color:var(--mute);
+    padding:6px 12px; cursor:pointer; font-family:var(--font); font-size:11.5px; white-space:nowrap;
+  }
+  .entry-table .row-btn:hover{ border-color:var(--red); color:var(--red); }
+  .entry-add{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center; }
+  .entry-add select, .entry-add input{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
+    padding:10px 14px; font-family:var(--font); font-size:13px; line-height:1;
+  }
+  .entry-add input{ flex:1 1 160px; min-width:0; }
+  .entry-add select:focus, .entry-add input:focus{ outline:none; border-color:var(--red); }
+  .fold-publish{
+    position:sticky; bottom:0; z-index:3; display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    margin:26px -32px -32px; padding:16px 32px; border-top:1px solid var(--line);
+    background:#101116; border-radius:0 0 var(--r-lg) var(--r-lg);
+  }
+  .fold-publish .status-line:empty{ display:none; }
 
   @media (max-width:640px){
     .admin-wrap{ padding:calc(var(--nav-h) + 30px) 16px 90px; }
     .admin-block{ padding:22px 16px; }
     .admin-fold > summary{ padding:20px 16px; }
     .admin-fold-body{ padding:0 16px 22px; }
+    .field-span{ grid-column:auto; }
+    .fold-publish{ margin:22px -16px -22px; padding:14px 16px; }
+    .fold-publish .btn{ flex:1 1 auto; }
   }
 </style>
 </head>
@@ -307,17 +336,32 @@
   </div>
 
   <details class="admin-fold" data-remember="resultFold">
-    <summary><span>대회 당일 결과 입력 · 부문 직접 편집</span><small>승자·점수·진행 상태 입력, 선수 배치·매트·경기시간 수정</small></summary>
+    <summary><span>대회 당일 결과 입력 · 부문 직접 편집</span><small>승자·점수·진행 상태 입력, 선수 이름·소속·배치, 매트·경기시간 수정</small></summary>
     <div class="admin-fold-body">
       <p class="desc">
-        선수 배치(1회전), 경기번호, 매트, 예상 경기 시간, 경기시간(분), 진행 상태, 승자와 점수를 직접 수정할 수 있습니다.
+        승자와 점수, 진행 상태, 선수 배치, 경기번호, 매트, 예상 경기 시간을 직접 수정할 수 있습니다.
         승자를 선택하면 다음 라운드에 자동 반영되며, 이전 결과를 바꾸면 이후 라운드 결과는 자동으로 무효화됩니다.
-        입력한 뒤 ③에서 <b style="color:var(--white)">[지금 사이트에 게시하기]</b>를 눌러야 공개 화면에 반영됩니다.
+        선수 이름·소속은 아래 <b style="color:var(--white)">선수 정보</b>에서 고칩니다.
+        입력한 뒤 맨 아래 <b style="color:var(--white)">[변경 내용 사이트에 게시]</b>를 눌러야 공개 화면에 반영됩니다.
       </p>
-      <div class="field-grid" style="margin-bottom:18px;">
+      <div class="field-grid div-find">
         <div class="field">
-          <label>부문 선택</label>
+          <label>매트</label>
+          <select id="divMatFilter"><option value="">전체 매트</option></select>
+        </div>
+        <div class="field field-span">
+          <label>부문·선수 찾기</label>
+          <input type="search" id="divSearch" placeholder="부문 이름, 선수 이름, 소속팀" autocomplete="off">
+        </div>
+      </div>
+      <div class="field-grid" style="margin-bottom:18px;">
+        <div class="field field-span">
+          <label>부문 선택 <span id="divCount"></span></label>
           <select id="divSelect"></select>
+        </div>
+        <div class="field">
+          <label>부문 이름 (공개 화면 표시)</label>
+          <input type="text" id="divTitle">
         </div>
         <div class="field">
           <label>이 부문 매트</label>
@@ -340,6 +384,30 @@
         <table class="edit-table" id="matchTable"></table>
       </div>
       <p class="admin-note" id="divWarn"></p>
+
+      <div class="admin-sub">
+        <h3>선수 정보 <span>(이름·소속 수정, 선수 추가·빼기)</span></h3>
+        <p class="desc">
+          이름이나 소속을 고치면 이 부문의 모든 경기에 함께 반영됩니다. 대체 선수는 이름·소속만 바꾸면 됩니다.
+          새로 추가한 선수는 위 경기 표의 선수 칸에서 BYE나 미정 자리에 배치해 주세요.
+          선수를 빼면 그 자리는 부전승(BYE)이 되어 상대 선수가 자동으로 다음 경기에 올라갑니다.
+        </p>
+        <div class="edit-table-wrap">
+          <table class="edit-table entry-table" id="entryTable"></table>
+        </div>
+        <div class="entry-add">
+          <select id="entryAddPool" aria-label="추가할 조"></select>
+          <input type="text" id="entryAddName" placeholder="이름" aria-label="추가할 선수 이름">
+          <input type="text" id="entryAddTeam" placeholder="소속팀" aria-label="추가할 선수 소속팀">
+          <button class="btn btn-outline" id="entryAddBtn" type="button">선수 추가</button>
+        </div>
+      </div>
+
+      <div class="fold-publish">
+        <button class="btn btn-primary" id="publishBtn2" type="button">변경 내용 사이트에 게시</button>
+        <button class="btn btn-outline" id="saveDraftBtn2" type="button">초안만 저장</button>
+        <span class="status-line" id="publishStatus2"></span>
+      </div>
     </div>
   </details>
 
@@ -494,6 +562,6 @@
 <script src="assets/js/bracket-render.js?v=5"></script>
 <script src="assets/js/bracket-import.js?v=2"></script>
 <script src="assets/js/bracket-import-mat.js?v=2"></script>
-<script src="assets/js/admin-bracket.js?v=5"></script>
+<script src="assets/js/admin-bracket.js?v=6"></script>
 </body>
 </html>

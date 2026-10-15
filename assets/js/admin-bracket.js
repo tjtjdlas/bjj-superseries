@@ -24,12 +24,19 @@
   var rosterStatus = $('#rosterStatus');
   var divPreview = $('#divPreview');
   var divSelect = $('#divSelect');
+  var divSearch = $('#divSearch');
+  var divMatFilter = $('#divMatFilter');
+  var divCount = $('#divCount');
+  var divTitle = $('#divTitle');
   var divMat = $('#divMat');
   var divDuration = $('#divDuration');
   var matchTable = $('#matchTable');
+  var entryTable = $('#entryTable');
+  var entryAddPool = $('#entryAddPool');
   var divWarn = $('#divWarn');
   var previewBox = $('#previewBox');
   var publishStatus = $('#publishStatus');
+  var publishStatus2 = $('#publishStatus2'); // 결과 입력 구역 아래 게시 버튼 옆 (③과 같은 내용)
   var generateStatus = $('#generateStatus');
   var historyList = $('#historyList');
   var undoBtn = $('#undoBtn');
@@ -38,9 +45,12 @@
 
   function setStatus(el, msg, kind) {
     if (!el) return;
-    el.textContent = msg;
-    el.classList.remove('is-dirty', 'is-ok', 'is-err');
-    if (kind) el.classList.add('is-' + kind);
+    var els = (el === publishStatus && publishStatus2) ? [el, publishStatus2] : [el];
+    els.forEach(function (x) {
+      x.textContent = msg;
+      x.classList.remove('is-dirty', 'is-ok', 'is-err');
+      if (kind) x.classList.add('is-' + kind);
+    });
   }
 
   function markDirty() {
@@ -497,27 +507,89 @@
 
   /* ---------- 부문 편집 ---------- */
 
+  // 찾기 조건에 맞는 부문이 없으면 null (보이지 않는 부문을 실수로 지우거나 고치지 않도록)
   function currentDivision() {
-    return draft.divisions.filter(function (d) { return d.id === currentDivId; })[0] || draft.divisions[0] || null;
+    return draft.divisions.filter(function (d) { return d.id === currentDivId; })[0] || null;
+  }
+
+  // 부문 찾기: 매트(시트) + 부문·선수·소속 검색으로 부문 선택 목록을 좁힌다
+  function compact(s) { return String(s == null ? '' : s).replace(/\s+/g, '').toLowerCase(); }
+
+  function divGroups(d) {
+    if (d.sheets && d.sheets.length) return d.sheets;
+    return d.mat ? [d.mat + '매트'] : [];
+  }
+
+  function divHit(d, mat, q) {
+    if (mat && divGroups(d).indexOf(mat) === -1) return false;
+    if (!q) return true;
+    if (compact(d.title).indexOf(q) !== -1) return true;
+    return (d.pools || []).some(function (p) {
+      return (p.entries || []).some(function (e) {
+        return compact(e.name).indexOf(q) !== -1 || compact(e.team).indexOf(q) !== -1;
+      });
+    });
+  }
+
+  function renderMatFilter() {
+    if (!divMatFilter) return;
+    var seen = {};
+    var list = [];
+    draft.divisions.forEach(function (d) {
+      divGroups(d).forEach(function (g) {
+        if (!seen[g]) { seen[g] = true; list.push(g); }
+      });
+    });
+    list.sort(function (a, b) { return String(a).localeCompare(String(b), 'ko', { numeric: true }); });
+    var cur = seen[divMatFilter.value] ? divMatFilter.value : '';
+    divMatFilter.innerHTML = '<option value="">전체 매트</option>' + list.map(function (g) {
+      return '<option value="' + esc(g) + '"' + (g === cur ? ' selected' : '') + '>' + esc(g) + '</option>';
+    }).join('');
+  }
+
+  // 매트를 고르면 그 매트 엑셀에 그려진 순서대로 보여 준다
+  function filteredDivisions() {
+    var mat = divMatFilter ? divMatFilter.value : '';
+    var q = compact(divSearch ? divSearch.value : '');
+    var list = draft.divisions.filter(function (d) { return divHit(d, mat, q); });
+    if (!mat) return list;
+    function pos(d) { return (d.sheetPos && d.sheetPos[mat] != null) ? d.sheetPos[mat] : 9999; }
+    return list.map(function (d, i) { return { d: d, i: i }; })
+      .sort(function (a, b) { return (pos(a.d) - pos(b.d)) || (a.i - b.i); })
+      .map(function (x) { return x.d; });
   }
 
   function renderDivSelect() {
-    if (!divSelect) return;
+    if (!divSelect) return [];
+    renderMatFilter();
     if (!draft.divisions.length) {
       divSelect.innerHTML = '<option value="">(생성된 부문 없음)</option>';
       currentDivId = null;
-      return;
+      if (divCount) divCount.textContent = '';
+      return [];
     }
-    divSelect.innerHTML = draft.divisions.map(function (d) {
+    var list = filteredDivisions();
+    if (divCount) {
+      divCount.textContent = list.length === draft.divisions.length
+        ? '(' + list.length + '개)'
+        : '(' + draft.divisions.length + '개 중 ' + list.length + '개)';
+    }
+    if (!list.length) {
+      divSelect.innerHTML = '<option value="">(찾는 부문 없음)</option>';
+      currentDivId = null;
+      return list;
+    }
+    if (!list.some(function (d) { return d.id === currentDivId; })) currentDivId = list[0].id;
+    divSelect.innerHTML = list.map(function (d) {
       var where = (d.sheets && d.sheets.length) ? '[' + d.sheets.join('·') + '] ' : '';
       return '<option value="' + esc(d.id) + '"' + (d.id === currentDivId ? ' selected' : '') + '>' +
         esc(where + d.title) + ' (' + (d.entryCount || 0) + '명)</option>';
     }).join('');
-    if (!currentDivId) currentDivId = draft.divisions[0].id;
     divSelect.onchange = function () {
       currentDivId = divSelect.value;
       renderMatchTable();
     };
+    return list;
   }
 
   function roundName(d, m) {
@@ -533,15 +605,30 @@
     return (d.pools || []).filter(function (p) { return p.name === m.pool; })[0] || null;
   }
 
-  function renderMatchTable() {
-    var d = currentDivision();
-    renderDivSelect();
+  // keepEntries: 선수 정보 표에서 입력 중일 때는 그 표를 다시 그리지 않는다(입력 칸 포커스 유지)
+  function renderMatchTable(keepEntries) {
+    var d = renderDivSelect().length ? currentDivision() : null;
     if (!d) {
-      matchTable.innerHTML = '<tbody><tr><td style="padding:40px;text-align:center;color:var(--mute-2);">초안에 대진이 없습니다. ①에서 대진표 엑셀을 첨부하고 [검증 결과 초안에 반영]을 눌러 주세요.</td></tr></tbody>';
+      var emptyMsg = draft.divisions.length
+        ? '찾는 부문이 없습니다. 매트나 검색어를 바꿔 보세요.'
+        : '초안에 대진이 없습니다. ①에서 대진표 엑셀을 첨부하고 [검증 결과 초안에 반영]을 눌러 주세요.';
+      matchTable.innerHTML = '<tbody><tr><td style="padding:40px;text-align:center;color:var(--mute-2);">' + emptyMsg + '</td></tr></tbody>';
       if (divWarn) divWarn.textContent = '';
+      if (divTitle) divTitle.value = '';
+      renderEntryTable(null);
       return;
     }
     byId = B.indexMatches(draft);
+    if (divTitle) {
+      divTitle.value = d.title || '';
+      divTitle.onchange = function () {
+        var t = divTitle.value.replace(/\s+/g, ' ').trim();
+        if (!t) { divTitle.value = d.title || ''; return; }
+        d.title = t;
+        markDirty();
+        renderMatchTable();
+      };
+    }
     if (divMat) { divMat.value = d.mat || ''; divMat.onchange = function () { d.mat = Number(divMat.value) || null; markDirty(); }; }
     if (divDuration) {
       divDuration.value = d.duration || '';
@@ -570,18 +657,22 @@
       var skipped = B.isSkippedMatch(m, byId);
       var winner = B.winnerOf(m, byId);
 
+      // 선수가 직접 들어가는 자리(선수·BYE·미정)는 라운드와 관계없이 바꿀 수 있다.
+      // 매트별 대진표는 2회전부터 시작하는 선수가 있다. 앞 경기 승자/패자 자리는 결과로 정해진다.
       function slotCell(i) {
         var s = m.slots[i];
         var o = occ[i];
-        if (s && (s.entryId || s.bye) && m.round === 0) {
-          var pool = poolOf(d, m);
-          var opts = ['<option value="__bye"' + (s.bye ? ' selected' : '') + '>— BYE 부전승 —</option>'];
-          if (pool) {
-            pool.entries.forEach(function (e) {
-              opts.push('<option value="' + esc(e.id) + '"' + (s.entryId === e.id ? ' selected' : '') + '>' +
-                esc(e.name) + ' / ' + esc(e.team || '-') + (e.seed ? ' [시드' + e.seed + ']' : '') + '</option>');
-            });
-          }
+        var pool = poolOf(d, m);
+        if (s && !s.from && pool) {
+          var tbd = !s.entryId && !s.bye;
+          var opts = [
+            '<option value="__tbd"' + (tbd ? ' selected' : '') + '>— 미정 (추후 공개) —</option>',
+            '<option value="__bye"' + (s.bye ? ' selected' : '') + '>— BYE 부전승 —</option>'
+          ];
+          pool.entries.forEach(function (e) {
+            opts.push('<option value="' + esc(e.id) + '"' + (s.entryId === e.id ? ' selected' : '') + '>' +
+              esc(e.name) + ' / ' + esc(e.team || '-') + (e.seed ? ' [시드' + e.seed + ']' : '') + '</option>');
+          });
           return '<td class="col-wide"><select data-act="slot" data-mid="' + esc(m.id) + '" data-idx="' + i + '">' + opts.join('') + '</select></td>';
         }
         var label = o.kind === 'entry'
@@ -637,6 +728,7 @@
       if (dup.length) msgs.push('⚠ 중복 경기번호: ' + dup.join(', '));
       divWarn.innerHTML = msgs.length ? msgs.map(esc).join('<br>') : '';
     }
+    if (!keepEntries) renderEntryTable(d);
   }
 
   function bindMatchInputs(d) {
@@ -652,16 +744,16 @@
           var val = el.value;
           if (val === '__bye') {
             m.slots[idx] = { bye: true };
+          } else if (val === '__tbd') {
+            m.slots[idx] = { tbd: true };
           } else {
-            // 같은 조의 다른 자리에 이미 배치돼 있으면 서로 교환
+            // 같은 조의 다른 자리에 이미 배치돼 있으면 서로 교환 (그 자리가 BYE/미정이었으면 그대로 넘김)
             var prev = m.slots[idx];
+            var back = prev && prev.entryId ? { entryId: prev.entryId } : (prev && prev.bye ? { bye: true } : { tbd: true });
             if (pool) {
               pool.matches.forEach(function (om) {
-                if (om.round !== 0) return;
-                om.slots.forEach(function (s, si) {
-                  if (s.entryId === val && !(om.id === m.id && si === idx)) {
-                    om.slots[si] = prev && prev.entryId ? { entryId: prev.entryId } : { bye: true };
-                  }
+                (om.slots || []).forEach(function (s, si) {
+                  if (s.entryId === val && !(om.id === m.id && si === idx)) om.slots[si] = B.clone(back);
                 });
               });
             }
@@ -721,6 +813,138 @@
     return found;
   }
 
+  /* ---------- 선수 정보 (이름·소속 수정, 추가·빼기) ---------- */
+
+  function syncEntryCount(d) {
+    d.entryCount = (d.pools || []).reduce(function (n, p) { return n + (p.entries || []).length; }, 0);
+  }
+
+  // 선수가 들어가 있는 경기 자리 (예: "A조 8강 #3")
+  function placesOf(d, entryId) {
+    var out = [];
+    (d.pools || []).forEach(function (p) {
+      (p.matches || []).forEach(function (m) {
+        (m.slots || []).forEach(function (s) {
+          if (s.entryId === entryId) out.push(roundName(d, m) + (m.no ? ' #' + m.no : ''));
+        });
+      });
+    });
+    return out;
+  }
+
+  function renderEntryTable(d) {
+    if (!entryTable) return;
+    var addBtn = $('#entryAddBtn');
+    if (!d || !(d.pools || []).length) {
+      entryTable.innerHTML = '<tbody><tr><td style="padding:28px;text-align:center;color:var(--mute-2);">선택한 부문이 없습니다.</td></tr></tbody>';
+      if (entryAddPool) entryAddPool.innerHTML = '';
+      if (addBtn) addBtn.disabled = true;
+      return;
+    }
+    if (addBtn) addBtn.disabled = false;
+    var multi = d.pools.length > 1;
+    var head = '<thead><tr>' + (multi ? '<th>조</th>' : '') +
+      '<th>이름</th><th>소속팀</th><th>배치된 경기</th><th></th></tr></thead>';
+    var rows = [];
+    d.pools.forEach(function (p) {
+      (p.entries || []).forEach(function (e) {
+        var places = placesOf(d, e.id);
+        rows.push('<tr>' +
+          (multi ? '<td class="cell-round">' + esc(p.name) + '조</td>' : '') +
+          '<td class="col-wide"><input type="text" data-ent="name" data-eid="' + esc(e.id) + '" value="' + esc(e.name || '') + '" aria-label="이름"></td>' +
+          '<td class="col-wide"><input type="text" data-ent="team" data-eid="' + esc(e.id) + '" value="' + esc(e.team || '') + '" aria-label="소속팀"></td>' +
+          '<td class="cell-place' + (places.length ? '' : ' is-free') + '">' +
+            esc(places.length ? places.join(', ') : '배치 안 됨 — 위 경기 표에서 자리를 정해 주세요') + '</td>' +
+          '<td class="col-tight"><button class="row-btn" type="button" data-ent="remove" data-eid="' + esc(e.id) + '">빼기</button></td>' +
+        '</tr>');
+      });
+    });
+    entryTable.innerHTML = head + '<tbody>' + (rows.join('') ||
+      '<tr><td colspan="5" style="padding:28px;text-align:center;color:var(--mute-2);">선수가 없습니다.</td></tr>') + '</tbody>';
+
+    if (entryAddPool) {
+      var keep = entryAddPool.value;
+      entryAddPool.innerHTML = d.pools.map(function (p) {
+        return '<option value="' + esc(p.name) + '"' + (p.name === keep ? ' selected' : '') + '>' +
+          esc(multi ? p.name + '조에 추가' : '이 부문에 추가') + '</option>';
+      }).join('');
+      entryAddPool.hidden = !multi;
+    }
+
+    var entries = B.entryIndex(d);
+    entryTable.querySelectorAll('[data-ent]').forEach(function (el) {
+      var e = entries[el.dataset.eid];
+      if (!e) return;
+      var field = el.dataset.ent;
+      if (field === 'remove') {
+        el.addEventListener('click', function () { removeEntry(d, e); });
+        return;
+      }
+      el.addEventListener('input', function () {
+        e[field] = el.value;
+        markDirty();
+      });
+      el.addEventListener('change', function () {
+        var v = el.value.replace(/\s+/g, ' ').trim();
+        if (field === 'name' && !v) {
+          alert('이름은 비워 둘 수 없습니다. 선수를 빼려면 [빼기]를 눌러 주세요.');
+          v = el.defaultValue;
+        }
+        e[field] = v;
+        el.value = v;
+        el.defaultValue = v;
+        markDirty();
+        renderMatchTable(true);
+      });
+    });
+  }
+
+  function removeEntry(d, e) {
+    var places = placesOf(d, e.id);
+    var msg = '"' + e.name + '" 선수를 이 부문에서 뺄까요?';
+    if (places.length) msg += '\n\n배치된 자리(' + places.join(', ') + ')는 부전승(BYE)이 되어 상대 선수가 자동으로 올라갑니다.';
+    msg += '\n\n[직전 초안 복원]으로 되돌릴 수 있습니다.';
+    if (!confirm(msg)) return;
+    pushUndo('선수 빼기 직전');
+    d.pools.forEach(function (p) {
+      p.entries = (p.entries || []).filter(function (x) { return x.id !== e.id; });
+      (p.matches || []).forEach(function (m) {
+        m.slots = (m.slots || []).map(function (s) { return s.entryId === e.id ? { bye: true } : s; });
+      });
+    });
+    B.allMatches(d).forEach(function (m) { if (m.winner === e.id) m.winner = null; });
+    syncEntryCount(d);
+    markDirty();
+    renderMatchTable();
+  }
+
+  function addEntry() {
+    var d = currentDivision();
+    if (!d || !(d.pools || []).length) return;
+    var nameEl = $('#entryAddName');
+    var teamEl = $('#entryAddTeam');
+    var name = (nameEl ? nameEl.value : '').replace(/\s+/g, ' ').trim();
+    var team = (teamEl ? teamEl.value : '').replace(/\s+/g, ' ').trim();
+    if (!name) {
+      alert('추가할 선수 이름을 입력해 주세요.');
+      if (nameEl) nameEl.focus();
+      return;
+    }
+    var poolName = entryAddPool ? entryAddPool.value : '';
+    var pool = d.pools.filter(function (p) { return p.name === poolName; })[0] || d.pools[0];
+    var ids = B.entryIndex(d);
+    var id;
+    do { id = d.id + '-add-' + Math.random().toString(36).slice(2, 8); } while (ids[id]);
+    pool.entries = pool.entries || [];
+    pool.entries.push({ id: id, name: name, team: team, seed: 0 });
+    syncEntryCount(d);
+    if (nameEl) nameEl.value = '';
+    if (teamEl) teamEl.value = '';
+    markDirty();
+    renderMatchTable();
+    setStatus(publishStatus, '"' + name + '" 선수를 추가했습니다. 위 경기 표에서 BYE나 미정 자리에 배치한 뒤 게시해 주세요.', 'dirty');
+  }
+
   /* ---------- 미리보기 ---------- */
 
   function renderPreview(all) {
@@ -771,8 +995,10 @@
       }
     }
     // 빈 초안이 게시되지 않도록 (공개 화면을 비우려면 [게시 취소(비우기)] 사용)
-    var pub = $('#publishBtn');
-    if (pub) pub.disabled = !n;
+    ['#publishBtn', '#publishBtn2'].forEach(function (sel) {
+      var pub = $(sel);
+      if (pub) pub.disabled = !n;
+    });
     var hint = $('#publishHint');
     if (hint) hint.textContent = n ? '' : '초안에 부문이 없어 게시할 수 없습니다. ①에서 엑셀을 첨부하고 [검증 결과 초안에 반영]을 먼저 눌러 주세요.';
   }
@@ -1076,6 +1302,17 @@
   bind('previewAllBtn', function () { renderPreview(true); });
   bind('saveDraftBtn', function () { saveDraft(false); });
   bind('publishBtn', publish);
+  bind('saveDraftBtn2', function () { saveDraft(false); });
+  bind('publishBtn2', publish);
+  bind('entryAddBtn', addEntry);
+  ['#entryAddName', '#entryAddTeam'].forEach(function (sel) {
+    var el = $(sel);
+    if (el) el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addEntry(); }
+    });
+  });
+  if (divSearch) divSearch.addEventListener('input', function () { renderMatchTable(); });
+  if (divMatFilter) divMatFilter.addEventListener('change', function () { renderMatchTable(); });
   bind('unpublishBtn', unpublish);
   bind('exportXlsxBtn', exportXlsx);
   bind('exportJsonBtn', exportJson);
