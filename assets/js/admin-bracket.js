@@ -165,6 +165,7 @@
       if (!confirm(warn)) return;
       pushUndo('전체 재생성 직전');
     }
+    markStructural();
     draft = B.generate(roster.athletes, draft.settings);
     byId = B.indexMatches(draft);
     currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
@@ -193,6 +194,7 @@
   function undo() {
     if (!undoStack.length) return;
     var last = undoStack.pop();
+    markStructural();
     draft = last.state;
     byId = B.indexMatches(draft);
     if (!undoStack.length && undoBtn) undoBtn.disabled = true;
@@ -453,6 +455,7 @@
     if (!confirm(msg)) return;
 
     pushUndo('엑셀 가져오기 직전');
+    markStructural();
 
     if (mode === 'replace') {
       draft.divisions = incoming;
@@ -1109,14 +1112,174 @@
   //   data.bracketAdmin  = { draft, history }
   var HISTORY_MAX = 3;
 
-  async function fetchData() {
-    var res = await sb.from('roster_state').select('data').eq('id', 1).single();
-    if (res.error) throw res.error;
-    return (res.data && res.data.data) || {};
+  /* 여러 기기에서 동시에 결과를 입력해도 서로 지우지 않도록:
+   *  - baseDraft: 이 기기가 마지막으로 서버에서 받았거나 서버에 쓴 초안
+   *  - 저장·게시할 때 서버 초안이 baseDraft와 다르면(다른 기기가 그 사이에 저장),
+   *    이 기기에서 바꾼 칸만 서버 최신 초안 위에 얹어 합친다. 같은 칸을 양쪽에서 고쳤으면 이 기기 값.
+   *  - 엑셀 반영·자동 생성·되돌리기·부문 삭제처럼 초안 전체가 바뀐 경우(structural)는 합치지 않고 물어본다.
+   *  - 쓰기는 읽은 뒤 그 사이 행이 바뀌지 않았을 때만 성공한다(updated_at 비교). 바뀌었으면 다시 읽어 합친다.
+   */
+  var baseDraft = null;
+  var structural = false;
+  var saving = false;
+
+  function markStructural() { structural = true; }
+
+  function rememberBase(d) {
+    baseDraft = B.clone(d);
+    structural = false;
   }
 
-  async function fetchRecord() {
-    var data = await fetchData();
+  function isObj(x) { return x !== null && typeof x === 'object' && !Array.isArray(x); }
+
+  // 값 비교 (키 순서 무시, null·undefined·없는 키는 같은 것으로 본다)
+  function sameJson(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return a == null && b == null;
+    if (typeof a !== 'object' || typeof b !== 'object') return a === b;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    var i;
+    if (Array.isArray(a)) {
+      if (a.length !== b.length) return false;
+      for (i = 0; i < a.length; i++) if (!sameJson(a[i], b[i])) return false;
+      return true;
+    }
+    var keys = Object.keys(a).concat(Object.keys(b));
+    for (i = 0; i < keys.length; i++) if (!sameJson(a[keys[i]], b[keys[i]])) return false;
+    return true;
+  }
+
+  // 원소마다 고유한 id(조는 name)가 있는 배열이면 그 키 이름. 아니면 null(통째로 비교).
+  function arrayKey(lists) {
+    var names = ['id', 'name'];
+    for (var n = 0; n < names.length; n++) {
+      var k = names[n];
+      var ok = true;
+      var any = false;
+      lists.forEach(function (arr) {
+        var seen = Object.create(null);
+        (arr || []).forEach(function (x) {
+          any = true;
+          if (!isObj(x) || typeof x[k] !== 'string' || seen[x[k]]) ok = false;
+          else seen[x[k]] = true;
+        });
+      });
+      if (ok && any) return k;
+    }
+    return null;
+  }
+
+  function merge3(base, local, remote, ctx) {
+    if (sameJson(local, base)) return remote;           // 이 기기에서 안 바꿈 → 서버 값
+    if (sameJson(remote, base) || sameJson(local, remote)) return local;  // 서버에서 안 바꿈 → 이 기기 값
+    if (isObj(local) && isObj(remote)) {
+      var b = isObj(base) ? base : {};
+      var out = {};
+      Object.keys(remote).concat(Object.keys(local)).forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(out, k)) return;
+        var v = merge3(b[k], local[k], remote[k], ctx);
+        if (v !== undefined) out[k] = v;
+      });
+      return out;
+    }
+    if (Array.isArray(local) && Array.isArray(remote)) {
+      var key = arrayKey([Array.isArray(base) ? base : [], local, remote]);
+      if (key) return mergeKeyed(Array.isArray(base) ? base : [], local, remote, key, ctx);
+    }
+    ctx.conflicts++;
+    return local;                                        // 같은 칸을 양쪽에서 고침 → 이 기기 값
+  }
+
+  function mergeKeyed(base, local, remote, key, ctx) {
+    function index(arr) {
+      var m = Object.create(null);
+      arr.forEach(function (x) { m[x[key]] = x; });
+      return m;
+    }
+    var B0 = index(base);
+    var L = index(local);
+    var out = [];
+    var seen = Object.create(null);
+    remote.forEach(function (r) {
+      var k = r[key];
+      seen[k] = true;
+      if (k in L) { out.push(merge3(B0[k], L[k], r, ctx)); return; }
+      if (k in B0) {                                     // 이 기기에서 지움
+        if (!sameJson(r, B0[k])) ctx.conflicts++;        // 서버에서는 고쳤어도 지운 쪽을 따른다
+        return;
+      }
+      out.push(r);                                       // 다른 기기에서 새로 생김
+    });
+    local.forEach(function (l) {
+      var k = l[key];
+      if (seen[k]) return;
+      if (k in B0) {                                     // 다른 기기에서 지움
+        if (sameJson(l, B0[k])) return;
+        ctx.conflicts++;                                 // 이 기기에서 고친 것은 살린다
+      }
+      out.push(l);                                       // 이 기기에서 새로 생김
+    });
+    return out;
+  }
+
+  // 합친 결과가 대진으로 성립하는지 (없는 선수·경기를 가리키거나 한 선수가 두 자리에 있으면 안 됨)
+  function draftLooksValid(st) {
+    var ok = true;
+    var matchIds = B.indexMatches(st);
+    (st.divisions || []).forEach(function (d) {
+      var entries = B.entryIndex(d);
+      var placed = Object.create(null);
+      B.allMatches(d).forEach(function (m) {
+        (m.slots || []).forEach(function (s) {
+          if (!s) return;
+          if (s.entryId) {
+            if (!entries[s.entryId] || placed[s.entryId]) ok = false;
+            placed[s.entryId] = true;
+          }
+          if (s.from && !matchIds[s.from]) ok = false;
+        });
+      });
+    });
+    return ok;
+  }
+
+  // 서버에 쓸 초안을 정한다. null이면 쓰지 않는다(사용자가 취소).
+  function planDraft(data, info) {
+    var remoteRaw = data.bracketAdmin && data.bracketAdmin.draft;
+    if (!remoteRaw || !baseDraft) return draft;
+    var remote = B.normalizeState(B.clone(remoteRaw));
+    if (sameJson(remote, baseDraft)) return draft;          // 그 사이 다른 기기에서 바꾼 것 없음
+    if (!structural) {
+      var ctx = { conflicts: 0 };
+      var merged = merge3(baseDraft, draft, remote, ctx);
+      if (draftLooksValid(merged)) {
+        info.merged = true;
+        info.conflicts = ctx.conflicts;
+        return merged;
+      }
+    }
+    if (info.overwrite === undefined) {
+      info.overwrite = confirm('다른 기기에서 그 사이에 저장·게시한 내용이 있습니다.\n' +
+        (structural
+          ? '지금 초안은 엑셀 반영·되돌리기처럼 전체가 바뀐 상태라 자동으로 합칠 수 없습니다.\n\n'
+          : '같은 부문의 선수 배치를 양쪽에서 바꿔 자동으로 합칠 수 없습니다.\n\n') +
+        '[확인] 이 기기 내용으로 덮어쓰기 (다른 기기에서 입력한 내용은 사라짐)\n' +
+        '[취소] 저장하지 않기 → [서버 초안 다시 불러오기] 후 다시 입력');
+    }
+    return info.overwrite ? draft : null;
+  }
+
+  async function fetchRow() {
+    var res = await sb.from('roster_state').select('data, updated_at').eq('id', 1).single();
+    if (res.error) throw res.error;
+    return { data: (res.data && res.data.data) || {}, stamp: (res.data && res.data.updated_at) || null };
+  }
+
+  async function fetchData() {
+    return (await fetchRow()).data;
+  }
+
+  function recordFrom(data) {
     var pub = data.bracket || null;
     var adm = data.bracketAdmin || {};
     return {
@@ -1129,13 +1292,62 @@
     };
   }
 
+  async function fetchRecord() {
+    return recordFrom(await fetchData());
+  }
+
+  function sleep(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+
   // 명단(categories/athletes)은 건드리지 않고 대진표 부분만 바꿔 저장한다.
+  // mutate(data)는 서버 최신 데이터를 받아 고친다. false를 돌려주면 저장하지 않는다.
+  // 읽은 뒤 다른 기기가 먼저 저장했으면(updated_at 변경) 아무것도 쓰지 않고 다시 읽어 mutate부터 반복한다.
   async function writeBracket(mutate) {
-    var data = await fetchData();
-    mutate(data);
-    var res = await sb.from('roster_state').update({ data: data }).eq('id', 1);
-    if (res.error) throw res.error;
-    return data;
+    if (sb.auth && sb.auth.getSession) {
+      var ses = await sb.auth.getSession();
+      if (!ses || !ses.data || !ses.data.session) throw new Error('로그인이 만료되었습니다. 페이지를 새로고침해 다시 로그인한 뒤 눌러 주세요.');
+    }
+    for (var attempt = 0; attempt < 6; attempt++) {
+      var row = await fetchRow();
+      var data = row.data;
+      if (mutate(data) === false) return null;
+      var q = sb.from('roster_state').update({ data: data }).eq('id', 1);
+      if (row.stamp) q = q.eq('updated_at', row.stamp);
+      var res = await q.select('updated_at');
+      if (res.error) throw res.error;
+      if (res.data && res.data.length) return data;
+      // 한 줄도 안 바뀜: 다른 기기가 먼저 저장했거나(재시도), 저장 권한이 없음(로그인 만료)
+      var now = await fetchRow();
+      if (now.stamp === row.stamp) throw new Error('저장 권한이 없습니다. 로그인이 만료되었을 수 있으니 페이지를 새로고침해 다시 로그인해 주세요.');
+      await sleep(200 + Math.random() * 400);
+    }
+    throw new Error('다른 기기에서 동시에 저장하고 있어 저장하지 못했습니다. 잠시 후 다시 눌러 주세요.');
+  }
+
+  function setSaving(on) {
+    saving = on;
+    ['#publishBtn', '#publishBtn2', '#saveDraftBtn', '#saveDraftBtn2'].forEach(function (sel) {
+      var b = $(sel);
+      if (b) b.disabled = on || ((sel === '#publishBtn' || sel === '#publishBtn2') && !draft.divisions.length);
+    });
+  }
+
+  // 합쳐진 초안을 화면에 반영 (보던 부문·탭은 그대로)
+  function adoptDraft(next) {
+    if (next !== draft) {
+      draft = next;
+      byId = B.indexMatches(draft);
+      if (!draft.divisions.some(function (d) { return d.id === currentDivId; })) {
+        currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
+      }
+      renderAll();
+    }
+    rememberBase(draft);
+  }
+
+  function mergeNote(info) {
+    if (!info.merged) return '';
+    return ' 다른 기기에서 입력한 내용과 합쳤습니다.' +
+      (info.conflicts ? ' (같은 칸을 동시에 고친 ' + info.conflicts + '곳은 이 기기 내용으로 저장)' : '');
   }
 
   async function loadFromServer(silent) {
@@ -1148,6 +1360,7 @@
         published: row.published
       };
       draft = B.normalizeState(row.draft);
+      rememberBase(draft);
       byId = B.indexMatches(draft);
       currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
       dirty = false;
@@ -1164,94 +1377,133 @@
   }
 
   async function saveDraft(silent) {
+    if (saving) return false;
+    setSaving(true);
     setStatus(publishStatus, '초안 저장 중…');
     try {
-      await writeBracket(function (data) {
+      var info = {};
+      var finalDraft = null;
+      var written = await writeBracket(function (data) {
+        var plan = planDraft(data, info);
+        if (!plan) return false;
+        finalDraft = plan;
         data.bracketAdmin = data.bracketAdmin || {};
-        data.bracketAdmin.draft = draft;
+        data.bracketAdmin.draft = plan;
       });
+      if (!written) {
+        setStatus(publishStatus, '저장하지 않았습니다.', 'dirty');
+        return false;
+      }
       dirty = false;
-      if (!silent) setStatus(publishStatus, '초안을 저장했습니다. (공개 화면에는 아직 반영되지 않음)', 'ok');
+      adoptDraft(finalDraft);
+      if (!silent) setStatus(publishStatus, '초안을 저장했습니다. (공개 화면에는 아직 반영되지 않음)' + mergeNote(info), 'ok');
       return true;
     } catch (e) {
       setStatus(publishStatus, '초안 저장 실패: ' + e.message, 'err');
       alert('초안 저장 실패: ' + e.message);
       return false;
+    } finally {
+      setSaving(false);
     }
   }
 
   async function publish() {
+    if (saving) return;
     if (!draft.divisions.length && !confirm('부문이 없는 빈 대진표를 게시합니다. 계속할까요?')) return;
     var total = draft.divisions.length;
     if (!confirm('부문 ' + total + '개의 현재 초안을 공개 대진표에 게시합니다.\n공개 페이지에 즉시 반영됩니다. 계속할까요?')) return;
 
+    setSaving(true);
     setStatus(publishStatus, '게시 중…');
     try {
-      var row = await fetchRecord();
-      if ((row.version || 0) !== record.version) {
-        if (!confirm('다른 곳에서 먼저 게시된 버전(v' + row.version + ')이 있습니다.\n현재 초안으로 덮어쓸까요?')) {
-          setStatus(publishStatus, '게시를 취소했습니다.', 'dirty');
-          return;
+      var info = {};
+      var finalDraft = null;
+      var meta = null;
+      var written = await writeBracket(function (data) {
+        var plan = planDraft(data, info);
+        if (!plan) return false;
+        var row = recordFrom(data);
+        var history = (row.history || []).slice(0, HISTORY_MAX - 1);
+        if (row.published && row.version) {
+          history.unshift({
+            version: row.version,
+            published_at: row.published_at,
+            snapshot: row.published
+          });
         }
-      }
-      var history = (row.history || []).slice(0, HISTORY_MAX - 1);
-      if (row.published && row.version) {
-        history.unshift({
-          version: row.version,
-          published_at: row.published_at,
-          snapshot: row.published
-        });
-      }
-      var nextVersion = (row.version || 0) + 1;
-      var publishedAt = new Date().toISOString();
-      var payload = B.clone(draft);
-      payload.version = nextVersion;
-      payload.publishedAt = publishedAt;
-      payload.publishedBy = window.SPYDER_ADMIN_EMAIL || '';
-
-      await writeBracket(function (data) {
+        var nextVersion = (row.version || 0) + 1;
+        var publishedAt = new Date().toISOString();
+        var payload = B.clone(plan);
+        payload.version = nextVersion;
+        payload.publishedAt = publishedAt;
+        payload.publishedBy = window.SPYDER_ADMIN_EMAIL || '';
         data.bracket = payload;
-        data.bracketAdmin = { draft: draft, history: history };
+        data.bracketAdmin = { draft: plan, history: history };
+        finalDraft = plan;
+        meta = { version: nextVersion, publishedAt: publishedAt, history: history };
       });
+      if (!written) {
+        setStatus(publishStatus, '게시를 취소했습니다.', 'dirty');
+        return;
+      }
 
-      record.version = nextVersion;
-      record.published_at = publishedAt;
-      record.history = history;
-      record.published = B.clone(draft);
+      record.version = meta.version;
+      record.published_at = meta.publishedAt;
+      record.history = meta.history;
+      record.published = B.clone(finalDraft);
       dirty = false;
+      adoptDraft(finalDraft);
       renderHistory();
       renderDraftSummary();
-      setStatus(publishStatus, '게시 완료! (v' + nextVersion + ') 공개 대진표에 실시간 반영되었습니다.', 'ok');
+      setStatus(publishStatus, '게시 완료! (v' + meta.version + ') 공개 대진표에 실시간 반영되었습니다.' + mergeNote(info), 'ok');
     } catch (e) {
       setStatus(publishStatus, '게시 실패: ' + e.message, 'err');
       alert('게시 실패: ' + e.message);
+    } finally {
+      setSaving(false);
     }
   }
 
   async function unpublish() {
+    if (saving) return;
     if (!confirm('공개 대진표를 비웁니다(초안은 그대로 유지). 계속할까요?')) return;
+    setSaving(true);
     try {
-      var row = await fetchRecord();
-      var history = (row.history || []).slice(0, HISTORY_MAX - 1);
-      if (row.published && row.version) {
-        history.unshift({ version: row.version, published_at: row.published_at, snapshot: row.published });
-      }
-      var cleared = B.emptyState(draft.settings);
-      cleared.version = (row.version || 0) + 1;
-      cleared.publishedAt = null;
-
-      await writeBracket(function (data) {
+      var info = {};
+      var finalDraft = null;
+      var meta = null;
+      var written = await writeBracket(function (data) {
+        var plan = planDraft(data, info);
+        if (!plan) return false;
+        var row = recordFrom(data);
+        var history = (row.history || []).slice(0, HISTORY_MAX - 1);
+        if (row.published && row.version) {
+          history.unshift({ version: row.version, published_at: row.published_at, snapshot: row.published });
+        }
+        var cleared = B.emptyState(plan.settings);
+        cleared.version = (row.version || 0) + 1;
+        cleared.publishedAt = null;
         data.bracket = cleared;
-        data.bracketAdmin = { draft: draft, history: history };
+        data.bracketAdmin = { draft: plan, history: history };
+        finalDraft = plan;
+        meta = { version: cleared.version, history: history };
       });
-      record.version = (row.version || 0) + 1;
-      record.history = history;
+      if (!written) {
+        setStatus(publishStatus, '게시 취소를 하지 않았습니다.', 'dirty');
+        return;
+      }
+      record.version = meta.version;
+      record.history = meta.history;
       record.published_at = null;
+      dirty = false;
+      adoptDraft(finalDraft);
       renderHistory();
       renderDraftSummary();
       setStatus(publishStatus, '게시를 취소했습니다. 공개 화면은 빈 상태로 표시됩니다.', 'ok');
     } catch (e) {
       setStatus(publishStatus, '게시 취소 실패: ' + e.message, 'err');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -1274,6 +1526,7 @@
         if (!h) return;
         if (!confirm('v' + h.version + ' 게시본을 초안으로 불러옵니다.\n현재 편집 중인 초안은 사라집니다. 계속할까요?')) return;
         pushUndo('롤백 직전');
+        markStructural();
         draft = B.normalizeState(h.snapshot);
         byId = B.indexMatches(draft);
         currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
@@ -1428,6 +1681,7 @@
     if (!d) return;
     if (!confirm('"' + d.title + '" 부문의 대진을 초안에서 삭제할까요?\n(참가자 명단은 그대로 유지되며, 다시 생성할 수 있습니다)')) return;
     pushUndo('부문 삭제 직전');
+    markStructural();
     draft.divisions = draft.divisions.filter(function (x) { return x.id !== d.id; });
     currentDivId = draft.divisions.length ? draft.divisions[0].id : null;
     byId = B.indexMatches(draft);
