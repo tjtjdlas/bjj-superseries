@@ -31,6 +31,9 @@
   var divMat = $('#divMat');
   var divDuration = $('#divDuration');
   var matchTable = $('#matchTable');
+  var resultTable = $('#resultTable');
+  var placeTable = $('#placeTable');
+  var resultHidden = $('#resultHidden');
   var entryTable = $('#entryTable');
   var entryAddPool = $('#entryAddPool');
   var divWarn = $('#divWarn');
@@ -605,14 +608,67 @@
     return (d.pools || []).filter(function (p) { return p.name === m.pool; })[0] || null;
   }
 
+  /* 편집 탭: 결과 입력 / 선수 정보·배치 / 경기 세부 설정 */
+  var TAB_KEY = 'spyderBracketAdmin.editTab';
+  var editTab = 'result';
+  try { editTab = localStorage.getItem(TAB_KEY) || 'result'; } catch (e) { /* 기본 탭 */ }
+
+  function showTab(tab) {
+    if (!document.querySelector('.edit-pane[data-pane="' + tab + '"]')) tab = 'result';
+    editTab = tab;
+    document.querySelectorAll('.edit-tab').forEach(function (b) {
+      var on = b.dataset.tab === tab;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.edit-pane').forEach(function (p) { p.hidden = p.dataset.pane !== tab; });
+    try { localStorage.setItem(TAB_KEY, tab); } catch (e) { /* 무시 */ }
+  }
+
+  // 대진 순서 (조 → 라운드 → 위에서부터)
+  function bracketOrder(a, b) {
+    if (a.pool !== b.pool) return String(a.pool).localeCompare(String(b.pool));
+    if (a.round !== b.round) return a.round - b.round;
+    return a.order - b.order;
+  }
+
+  // 경기 순서 (경기번호 순, 번호 없는 경기는 뒤에 대진 순서로)
+  function playOrder(a, b) {
+    if (a.no && b.no) {
+      var c = String(a.no).localeCompare(String(b.no), 'ko', { numeric: true });
+      if (c) return c;
+    } else if (a.no || b.no) {
+      return a.no ? -1 : 1;
+    }
+    return bracketOrder(a, b);
+  }
+
+  function emptyRows(msg, cols) {
+    return '<tbody><tr><td colspan="' + cols + '" style="padding:40px;text-align:center;color:var(--mute-2);">' + esc(msg) + '</td></tr></tbody>';
+  }
+
+  // 경기 칸: "#5" + "A조 4강"
+  function matchCell(d, m, extra) {
+    return '<td class="cell-match">' + (m.no ? '<b>#' + esc(m.no) + '</b>' : '') +
+      '<span>' + esc(roundName(d, m)) + (extra ? ' · ' + esc(extra) : '') + '</span></td>';
+  }
+
   // keepEntries: 선수 정보 표에서 입력 중일 때는 그 표를 다시 그리지 않는다(입력 칸 포커스 유지)
   function renderMatchTable(keepEntries) {
     var d = renderDivSelect().length ? currentDivision() : null;
+    showTab(editTab);
+    // 다시 그려도 표 안의 스크롤 위치는 유지
+    var wraps = Array.prototype.map.call(document.querySelectorAll('.admin-fold .edit-table-wrap'), function (w) {
+      return [w, w.scrollTop, w.scrollLeft];
+    });
     if (!d) {
       var emptyMsg = draft.divisions.length
         ? '찾는 부문이 없습니다. 매트나 검색어를 바꿔 보세요.'
         : '초안에 대진이 없습니다. ①에서 대진표 엑셀을 첨부하고 [검증 결과 초안에 반영]을 눌러 주세요.';
-      matchTable.innerHTML = '<tbody><tr><td style="padding:40px;text-align:center;color:var(--mute-2);">' + emptyMsg + '</td></tr></tbody>';
+      if (resultTable) resultTable.innerHTML = emptyRows(emptyMsg, 6);
+      if (placeTable) placeTable.innerHTML = emptyRows(emptyMsg, 3);
+      matchTable.innerHTML = emptyRows(emptyMsg, 6);
+      if (resultHidden) resultHidden.textContent = '';
       if (divWarn) divWarn.textContent = '';
       if (divTitle) divTitle.value = '';
       renderEntryTable(null);
@@ -640,81 +696,120 @@
       };
     }
 
+    renderResultTable(d);
+    renderPlaceTable(d);
+    renderDetailTable(d);
+    if (!keepEntries) renderEntryTable(d);
+    wraps.forEach(function (x) { x[0].scrollTop = x[1]; x[0].scrollLeft = x[2]; });
+  }
+
+  // ① 결과 입력: 실제로 치르는 경기만, 경기번호 순. 이긴 선수 이름을 눌러 승자를 고른다.
+  function renderResultTable(d) {
+    if (!resultTable) return;
     var entries = B.entryIndex(d);
-    var list = B.allMatches(d).slice().sort(function (a, b) {
-      if (a.pool !== b.pool) return String(a.pool).localeCompare(String(b.pool));
-      if (a.round !== b.round) return a.round - b.round;
-      return a.order - b.order;
-    });
-
-    var head = '<thead><tr>' +
-      ['라운드', '경기번호', '매트', '예상시각', '시간(분)', '상태', '선수 A', '선수 B', '승자', '점수 A', '점수 B', '승리 방식', '메모']
-        .map(function (h) { return '<th>' + h + '</th>'; }).join('') +
-      '</tr></thead>';
-
+    var all = B.allMatches(d);
+    var list = all.filter(function (m) { return !B.isSkippedMatch(m, byId); }).sort(playOrder);
+    var hidden = all.length - list.length;
+    if (resultHidden) resultHidden.textContent = hidden ? '부전승 자리(' + hidden + '곳)는 치르지 않는 경기라 목록에서 뺐습니다.' : '';
+    if (!list.length) {
+      resultTable.innerHTML = emptyRows('입력할 경기가 없습니다.', 6);
+      return;
+    }
+    var head = '<thead><tr><th>경기</th><th>선수 A</th><th class="th-center">점수</th><th>선수 B</th><th>승리 방식</th><th>상태</th></tr></thead>';
+    var statuses = ['예정', '진행', '종료'];
     var rows = list.map(function (m) {
       var occ = B.resolveSlots(m, byId);
-      var skipped = B.isSkippedMatch(m, byId);
       var winner = B.winnerOf(m, byId);
+      function pick(i) {
+        var o = occ[i] || { kind: 'tbd' };
+        if (o.kind !== 'entry') {
+          var label = o.kind === 'bye' ? '부전승' : (o.fromLabel || '미정');
+          return '<td class="cell-pick"><span class="pick-empty">' + esc(label) + '</span></td>';
+        }
+        var e = entries[o.entryId] || {};
+        var won = winner === o.entryId;
+        var cls = 'pick' + (winner ? (won ? ' is-win' : ' is-lose') : '');
+        return '<td class="cell-pick"><button type="button" class="' + cls + '" data-act="pick" data-mid="' + esc(m.id) +
+          '" data-eid="' + esc(o.entryId) + '" aria-pressed="' + won + '" title="' + (won ? '다시 누르면 승자 취소' : '눌러서 승자로 표시') + '">' +
+          '<span><b>' + esc(e.name || '?') + '</b>' + (e.team ? '<small>' + esc(e.team) + '</small>' : '') + '</span>' +
+          (won ? '<em>승</em>' : '') + '</button></td>';
+      }
+      return '<tr>' + matchCell(d, m) + pick(0) +
+        '<td class="cell-score">' +
+          '<input type="text" inputmode="numeric" data-act="s1" data-mid="' + esc(m.id) + '" value="' + esc(m.s1 || '') + '" aria-label="선수 A 점수">' +
+          '<i>:</i>' +
+          '<input type="text" inputmode="numeric" data-act="s2" data-mid="' + esc(m.id) + '" value="' + esc(m.s2 || '') + '" aria-label="선수 B 점수">' +
+        '</td>' +
+        pick(1) +
+        '<td class="cell-method"><input type="text" list="methodList" data-act="method" data-mid="' + esc(m.id) + '" value="' + esc(m.method || '') + '" placeholder="선택·입력" aria-label="승리 방식"></td>' +
+        '<td class="cell-status"><select data-act="status" data-mid="' + esc(m.id) + '" aria-label="진행 상태">' +
+          statuses.map(function (s) {
+            return '<option value="' + s + '"' + ((m.status || '예정') === s ? ' selected' : '') + '>' + s + '</option>';
+          }).join('') + '</select></td>' +
+      '</tr>';
+    }).join('');
+    resultTable.innerHTML = head + '<tbody>' + rows + '</tbody>';
+    bindEditInputs(resultTable, d);
+  }
 
-      // 선수가 직접 들어가는 자리(선수·BYE·미정)는 라운드와 관계없이 바꿀 수 있다.
-      // 매트별 대진표는 2회전부터 시작하는 선수가 있다. 앞 경기 승자/패자 자리는 결과로 정해진다.
+  // ② 선수 배치: 선수가 직접 들어가는 자리(선수·BYE·미정)는 라운드와 관계없이 바꿀 수 있다.
+  // 매트별 대진표는 2회전부터 시작하는 선수가 있다. 앞 경기 승자/패자 자리는 결과로 정해진다.
+  function renderPlaceTable(d) {
+    if (!placeTable) return;
+    var entries = B.entryIndex(d);
+    var list = B.allMatches(d).filter(function (m) {
+      return poolOf(d, m) && (m.slots || []).some(function (s) { return s && !s.from; });
+    }).sort(bracketOrder);
+    if (!list.length) {
+      placeTable.innerHTML = emptyRows('직접 배치하는 자리가 없습니다.', 3);
+      return;
+    }
+    var head = '<thead><tr><th>경기</th><th>선수 A</th><th>선수 B</th></tr></thead>';
+    var rows = list.map(function (m) {
+      var occ = B.resolveSlots(m, byId);
+      var pool = poolOf(d, m);
       function slotCell(i) {
         var s = m.slots[i];
-        var o = occ[i];
-        var pool = poolOf(d, m);
-        if (s && !s.from && pool) {
+        var o = occ[i] || { kind: 'tbd' };
+        if (s && !s.from) {
           var tbd = !s.entryId && !s.bye;
           var opts = [
             '<option value="__tbd"' + (tbd ? ' selected' : '') + '>— 미정 (추후 공개) —</option>',
-            '<option value="__bye"' + (s.bye ? ' selected' : '') + '>— BYE 부전승 —</option>'
+            '<option value="__bye"' + (s.bye ? ' selected' : '') + '>— 부전승 (BYE) —</option>'
           ];
           pool.entries.forEach(function (e) {
             opts.push('<option value="' + esc(e.id) + '"' + (s.entryId === e.id ? ' selected' : '') + '>' +
-              esc(e.name) + ' / ' + esc(e.team || '-') + (e.seed ? ' [시드' + e.seed + ']' : '') + '</option>');
+              esc(e.name) + (e.team ? ' · ' + esc(e.team) : '') + (e.seed ? ' [시드' + e.seed + ']' : '') + '</option>');
           });
-          return '<td class="col-wide"><select data-act="slot" data-mid="' + esc(m.id) + '" data-idx="' + i + '">' + opts.join('') + '</select></td>';
+          return '<td><select data-act="slot" data-mid="' + esc(m.id) + '" data-idx="' + i + '" aria-label="' + (i ? '선수 B' : '선수 A') + '">' + opts.join('') + '</select></td>';
         }
         var label = o.kind === 'entry'
-          ? ((entries[o.entryId] || {}).name || '?') + ' / ' + ((entries[o.entryId] || {}).team || '-')
-          : (o.kind === 'bye' ? 'BYE · 부전승' : (o.fromLabel || '진출자 미정'));
-        return '<td class="col-wide cell-round">' + esc(label) + '</td>';
+          ? ((entries[o.entryId] || {}).name || '?')
+          : (o.kind === 'bye' ? '부전승' : (o.fromLabel || '미정'));
+        return '<td class="cell-muted">' + esc(label) + '</td>';
       }
+      return '<tr>' + matchCell(d, m, B.isSkippedMatch(m, byId) ? '부전승' : '') + slotCell(0) + slotCell(1) + '</tr>';
+    }).join('');
+    placeTable.innerHTML = head + '<tbody>' + rows + '</tbody>';
+    bindEditInputs(placeTable, d);
+  }
 
-      var winOpts = ['<option value="">— 미정 —</option>'];
-      occ.forEach(function (o) {
-        if (o.kind !== 'entry') return;
-        var e = entries[o.entryId] || {};
-        winOpts.push('<option value="' + esc(o.entryId) + '"' + (winner === o.entryId ? ' selected' : '') + '>' +
-          esc(e.name || o.entryId) + '</option>');
-      });
-
-      var statuses = ['예정', '진행', '종료'];
-      var statusSel = skipped
-        ? '<td class="col-mid cell-round">부전승</td>'
-        : '<td class="col-mid"><select data-act="status" data-mid="' + esc(m.id) + '">' +
-          statuses.map(function (s) {
-            return '<option value="' + s + '"' + ((m.status || '예정') === s ? ' selected' : '') + '>' + s + '</option>';
-          }).join('') + '</select></td>';
-
-      return '<tr' + (m.order === 0 ? ' class="round-sep"' : '') + '>' +
-        '<td class="cell-round">' + esc(roundName(d, m)) + '</td>' +
-        '<td class="col-tight"><input type="text" data-act="no" data-mid="' + esc(m.id) + '" value="' + esc(m.no || '') + '"' + (skipped ? ' disabled' : '') + '></td>' +
-        '<td class="col-tight"><input type="number" min="1" data-act="mat" data-mid="' + esc(m.id) + '" value="' + esc(m.mat || '') + '"></td>' +
-        '<td class="col-tight"><input type="text" placeholder="10:24" data-act="time" data-mid="' + esc(m.id) + '" value="' + esc(m.time || '') + '"' + (skipped ? ' disabled' : '') + '></td>' +
-        '<td class="col-tight"><input type="number" min="1" data-act="duration" data-mid="' + esc(m.id) + '" value="' + esc(m.duration || '') + '"></td>' +
-        statusSel +
-        slotCell(0) + slotCell(1) +
-        '<td class="col-mid"><select data-act="winner" data-mid="' + esc(m.id) + '"' + (skipped ? ' disabled' : '') + '>' + winOpts.join('') + '</select></td>' +
-        '<td class="col-tight"><input type="text" data-act="s1" data-mid="' + esc(m.id) + '" value="' + esc(m.s1 || '') + '"></td>' +
-        '<td class="col-tight"><input type="text" data-act="s2" data-mid="' + esc(m.id) + '" value="' + esc(m.s2 || '') + '"></td>' +
-        '<td class="col-mid"><input type="text" data-act="method" data-mid="' + esc(m.id) + '" value="' + esc(m.method || '') + '" placeholder="서브미션/판정"></td>' +
-        '<td class="col-wide"><input type="text" data-act="note" data-mid="' + esc(m.id) + '" value="' + esc(m.note || '') + '"></td>' +
+  // ③ 경기 세부 설정: 경기번호·매트·예상 시각·경기시간·메모
+  function renderDetailTable(d) {
+    var list = B.allMatches(d).slice().sort(bracketOrder);
+    var head = '<thead><tr><th>경기</th><th>경기번호</th><th>매트</th><th>예상 시각</th><th>경기시간(분)</th><th>메모</th></tr></thead>';
+    var rows = list.map(function (m) {
+      var skipped = B.isSkippedMatch(m, byId);
+      return '<tr' + (skipped ? ' class="is-skipped"' : '') + '>' + matchCell(d, m, skipped ? '부전승' : '') +
+        '<td class="col-tight"><input type="text" data-act="no" data-mid="' + esc(m.id) + '" value="' + esc(m.no || '') + '"' + (skipped ? ' disabled' : '') + ' aria-label="경기번호"></td>' +
+        '<td class="col-tight"><input type="number" min="1" data-act="mat" data-mid="' + esc(m.id) + '" value="' + esc(m.mat || '') + '" aria-label="매트"></td>' +
+        '<td class="col-tight"><input type="text" data-act="time" data-mid="' + esc(m.id) + '" value="' + esc(m.time || '') + '"' + (skipped ? ' disabled' : '') + ' aria-label="예상 시각"></td>' +
+        '<td class="col-tight"><input type="number" min="1" data-act="duration" data-mid="' + esc(m.id) + '" value="' + esc(m.duration || '') + '" aria-label="경기시간(분)"></td>' +
+        '<td><input type="text" data-act="note" data-mid="' + esc(m.id) + '" value="' + esc(m.note || '') + '" aria-label="메모"></td>' +
       '</tr>';
     }).join('');
-
     matchTable.innerHTML = head + '<tbody>' + rows + '</tbody>';
-    bindMatchInputs(d);
+    bindEditInputs(matchTable, d);
 
     if (divWarn) {
       var msgs = [];
@@ -728,14 +823,35 @@
       if (dup.length) msgs.push('⚠ 중복 경기번호: ' + dup.join(', '));
       divWarn.innerHTML = msgs.length ? msgs.map(esc).join('<br>') : '';
     }
-    if (!keepEntries) renderEntryTable(d);
   }
 
-  function bindMatchInputs(d) {
-    matchTable.querySelectorAll('[data-act]').forEach(function (el) {
+  function setWinner(d, m, next) {
+    if (m.winner && next !== m.winner && downstreamHasResults(d, m)) {
+      if (!confirm('이 경기의 결과를 바꾸면 이후 라운드에 입력된 결과가 무효화됩니다.\n계속할까요?')) {
+        renderMatchTable();
+        return;
+      }
+    }
+    m.winner = next;
+    if (next && m.status !== '종료') m.status = '종료';
+    if (!next && m.status === '종료') m.status = '예정';
+    markDirty();
+    renderMatchTable();
+  }
+
+  function bindEditInputs(root, d) {
+    root.querySelectorAll('[data-act]').forEach(function (el) {
       var act = el.dataset.act;
       var m = byId[el.dataset.mid];
       if (!m) return;
+
+      if (act === 'pick') {
+        el.addEventListener('click', function () {
+          var eid = el.dataset.eid;
+          setWinner(d, m, B.winnerOf(m, byId) === eid ? null : eid);
+        });
+        return;
+      }
 
       if (act === 'slot') {
         el.addEventListener('change', function () {
@@ -759,23 +875,6 @@
             }
             m.slots[idx] = { entryId: val };
           }
-          markDirty();
-          renderMatchTable();
-        });
-        return;
-      }
-
-      if (act === 'winner') {
-        el.addEventListener('change', function () {
-          var next = el.value || null;
-          if (m.winner && next !== m.winner && downstreamHasResults(d, m)) {
-            if (!confirm('이 경기의 결과를 바꾸면 이후 라운드에 입력된 결과가 무효화됩니다.\n계속할까요?')) {
-              renderMatchTable();
-              return;
-            }
-          }
-          m.winner = next;
-          if (next && m.status === '예정') m.status = '종료';
           markDirty();
           renderMatchTable();
         });
@@ -854,7 +953,7 @@
           '<td class="col-wide"><input type="text" data-ent="name" data-eid="' + esc(e.id) + '" value="' + esc(e.name || '') + '" aria-label="이름"></td>' +
           '<td class="col-wide"><input type="text" data-ent="team" data-eid="' + esc(e.id) + '" value="' + esc(e.team || '') + '" aria-label="소속팀"></td>' +
           '<td class="cell-place' + (places.length ? '' : ' is-free') + '">' +
-            esc(places.length ? places.join(', ') : '배치 안 됨 — 위 경기 표에서 자리를 정해 주세요') + '</td>' +
+            esc(places.length ? places.join(', ') : '배치 안 됨 — 아래 선수 배치에서 자리를 정해 주세요') + '</td>' +
           '<td class="col-tight"><button class="row-btn" type="button" data-ent="remove" data-eid="' + esc(e.id) + '">빼기</button></td>' +
         '</tr>');
       });
@@ -942,7 +1041,7 @@
     if (teamEl) teamEl.value = '';
     markDirty();
     renderMatchTable();
-    setStatus(publishStatus, '"' + name + '" 선수를 추가했습니다. 위 경기 표에서 BYE나 미정 자리에 배치한 뒤 게시해 주세요.', 'dirty');
+    setStatus(publishStatus, '"' + name + '" 선수를 추가했습니다. 아래 선수 배치에서 부전승이나 미정 자리에 넣은 뒤 게시해 주세요.', 'dirty');
   }
 
   /* ---------- 미리보기 ---------- */
@@ -1312,6 +1411,9 @@
     });
   });
   if (divSearch) divSearch.addEventListener('input', function () { renderMatchTable(); });
+  document.querySelectorAll('.edit-tab').forEach(function (b) {
+    b.addEventListener('click', function () { showTab(b.dataset.tab); });
+  });
   if (divMatFilter) divMatFilter.addEventListener('change', function () { renderMatchTable(); });
   bind('unpublishBtn', unpublish);
   bind('exportXlsxBtn', exportXlsx);
