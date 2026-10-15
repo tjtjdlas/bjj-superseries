@@ -268,6 +268,19 @@
   }
   .entry-add input{ flex:1 1 160px; min-width:0; }
   .entry-add select:focus, .entry-add input:focus{ outline:none; border-color:var(--red); }
+  .adj-row{ display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-end; margin-bottom:12px; }
+  .adj-field{ display:flex; flex-direction:column; gap:6px; min-width:140px; }
+  .adj-field.grow{ flex:1 1 220px; }
+  .adj-field > span{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.8px; color:var(--mute-2); }
+  .adj-field select, .adj-field input{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:var(--r-pill); color:var(--white);
+    padding:10px 14px; font-family:var(--font); font-size:13px; line-height:1; width:100%;
+  }
+  .adj-field select:focus, .adj-field input:focus{ outline:none; border-color:var(--red); }
+  .adj-actions{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:6px; }
+  .adj-row .btn, .adj-actions .btn{ padding-top:11px; padding-bottom:11px; }
+  .entry-add select.grow{ flex:1 1 260px; min-width:0; }
+  .edit-pane .pane-title + .pane-hint:empty{ display:none; }
   .fold-publish{
     position:sticky; bottom:0; z-index:3; display:flex; flex-wrap:wrap; gap:12px; align-items:center;
     margin:26px -32px -32px; padding:16px 32px; border-top:1px solid var(--line);
@@ -431,7 +444,7 @@
       <div class="edit-tabs" role="tablist" aria-label="편집 항목">
         <button class="edit-tab" type="button" role="tab" data-tab="result">결과 입력</button>
         <button class="edit-tab" type="button" role="tab" data-tab="players">선수 정보·배치</button>
-        <button class="edit-tab" type="button" role="tab" data-tab="detail">경기 세부 설정</button>
+        <button class="edit-tab" type="button" role="tab" data-tab="detail">부문·매트 조정</button>
       </div>
 
       <div class="edit-pane" data-pane="result" role="tabpanel">
@@ -458,6 +471,7 @@
         <p class="pane-hint">
           이름이나 소속을 고치면 이 부문의 모든 경기에 함께 바뀝니다. 대체 선수는 이름·소속만 바꾸면 됩니다.
           선수를 빼면 그 자리는 부전승이 되어 상대 선수가 자동으로 올라갑니다.
+          체급이 바뀐 선수는 아래 <b>다른 부문으로 옮기기</b>를 쓰세요.
         </p>
         <div class="edit-table-wrap">
           <table class="edit-table entry-table" id="entryTable"></table>
@@ -468,11 +482,17 @@
           <input type="text" id="entryAddTeam" placeholder="소속팀" aria-label="추가할 선수 소속팀">
           <button class="btn btn-outline" id="entryAddBtn" type="button">선수 추가</button>
         </div>
+        <div class="entry-add">
+          <select id="moveEntry" aria-label="옮길 선수"></select>
+          <select id="moveEntryTo" class="grow" aria-label="옮겨 갈 부문"></select>
+          <button class="btn btn-outline" id="moveEntryBtn" type="button">다른 부문으로 옮기기</button>
+        </div>
 
         <h3 class="pane-title">선수 배치</h3>
         <p class="pane-hint">
           경기에 들어갈 선수를 고릅니다. 다른 자리에 있던 선수를 고르면 두 선수의 자리가 서로 바뀝니다.
           새로 추가한 선수는 부전승이나 미정 자리에 넣어 주세요.
+          빈 자리가 없으면 [부문·매트 조정] 탭의 <b>대진 다시 짜기</b>를 쓰세요.
         </p>
         <div class="edit-table-wrap">
           <table class="edit-table place-table" id="placeTable"></table>
@@ -480,14 +500,65 @@
       </div>
 
       <div class="edit-pane" data-pane="detail" role="tabpanel" hidden>
+        <h3 class="pane-title">매트 옮기기 · 순서 바꾸기</h3>
+        <p class="pane-hint" id="movePlace"></p>
+        <div class="adj-row">
+          <label class="adj-field"><span>매트</span><select id="moveMat"></select></label>
+          <label class="adj-field grow"><span>위치</span><select id="movePos"></select></label>
+          <label class="adj-field grow"><span>경기번호</span>
+            <select id="moveNo">
+              <option value="append">그 매트 마지막 번호 다음부터 새로 매기기</option>
+              <option value="keep">지금 번호 그대로</option>
+              <option value="clear">번호 지우기</option>
+            </select>
+          </label>
+        </div>
+        <div class="adj-actions">
+          <button class="btn btn-outline" id="moveBtn" type="button">이 매트로 옮기기</button>
+          <button class="btn btn-outline" id="reorderBtn" type="button">순서만 바꾸기</button>
+        </div>
+
+        <h3 class="pane-title">대진 다시 짜기</h3>
+        <p class="pane-hint">
+          선수가 늘거나 줄어 대진 모양을 바꿔야 할 때 씁니다. 이 부문 선수 <b id="rebuildCount">0</b>명으로 토너먼트를 새로 만들고,
+          이 부문에 입력된 결과는 지워집니다.
+        </p>
+        <div class="adj-row">
+          <label class="adj-field"><span>선수 순서</span>
+            <select id="rebuildOrder">
+              <option value="current">지금 순서대로</option>
+              <option value="random">무작위로 섞기</option>
+            </select>
+          </label>
+          <label class="adj-field grow"><span>경기번호</span>
+            <select id="rebuildNo">
+              <option value="append">이 매트 마지막 번호 다음부터</option>
+              <option value="clear">번호 없이</option>
+            </select>
+          </label>
+          <button class="btn btn-outline" id="rebuildBtn" type="button">대진 다시 짜기</button>
+        </div>
+
+        <h3 class="pane-title">다른 부문과 합치기</h3>
+        <p class="pane-hint">고른 부문의 선수를 모두 이 부문으로 옮기고 위 설정대로 대진을 다시 짭니다. 고른 부문은 없어집니다.</p>
+        <div class="adj-row">
+          <label class="adj-field grow"><span>합칠 부문</span><select id="mergeFrom"></select></label>
+          <button class="btn btn-outline" id="mergeBtn" type="button">이 부문으로 합치기</button>
+        </div>
+
+        <h3 class="pane-title">새 부문 만들기</h3>
+        <p class="pane-hint">만든 뒤 [선수 정보·배치]에서 선수를 추가하고, 여기서 <b>대진 다시 짜기</b>를 누르면 토너먼트가 만들어집니다.</p>
+        <div class="adj-row">
+          <label class="adj-field grow"><span>부문 이름</span><input type="text" id="newDivTitle" placeholder="예: 어덜트 블루벨트 남성 -70kg"></label>
+          <label class="adj-field"><span>매트</span><select id="newDivMat"></select></label>
+          <button class="btn btn-outline" id="newDivBtn" type="button">새 부문 만들기</button>
+        </div>
+
+        <h3 class="pane-title">부문 정보</h3>
         <div class="field-grid" style="margin-bottom:18px;">
           <div class="field">
             <label>부문 이름 (공개 화면 표시)</label>
             <input type="text" id="divTitle">
-          </div>
-          <div class="field">
-            <label>이 부문 매트</label>
-            <input type="number" min="1" max="12" id="divMat">
           </div>
           <div class="field">
             <label>이 부문 기본 경기시간 (분)</label>
@@ -498,6 +569,9 @@
             <button class="btn btn-outline" id="divDeleteBtn" type="button">이 부문 대진 삭제</button>
           </div>
         </div>
+
+        <h3 class="pane-title">경기별 번호·매트·시각</h3>
+        <p class="pane-hint">경기 하나만 다른 매트로 보낼 때는 그 경기의 매트 칸만 바꾸세요. 그 매트 탭에도 이 부문이 함께 보입니다.</p>
         <div class="edit-table-wrap">
           <table class="edit-table detail-table" id="matchTable"></table>
         </div>
@@ -663,6 +737,6 @@
 <script src="assets/js/bracket-render.js?v=5"></script>
 <script src="assets/js/bracket-import.js?v=2"></script>
 <script src="assets/js/bracket-import-mat.js?v=2"></script>
-<script src="assets/js/admin-bracket.js?v=7"></script>
+<script src="assets/js/admin-bracket.js?v=8"></script>
 </body>
 </html>
