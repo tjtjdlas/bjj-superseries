@@ -895,8 +895,15 @@
         el.addEventListener('change', function () {
           m.mat = Number(el.value) || null;
           ensureOnMat(d, m.mat);
+          // 옮긴 매트에 같은 경기번호가 이미 있으면 그 매트 마지막 번호 다음으로
+          var note = '';
+          if (m.mat && m.no && noTaken(m.mat, m.no, m.id)) {
+            m.no = String(maxNoOnMatExcept(m.mat, m.id) + 1);
+            note = ' ' + m.mat + '매트에 같은 번호가 있어 경기번호를 ' + m.no + '(으)로 바꿨습니다.';
+          }
           markDirty();
           renderMatchTable();
+          if (note) setStatus(publishStatus, '경기를 ' + m.mat + '매트로 옮겼습니다.' + note, 'dirty');
         });
         return;
       }
@@ -1157,6 +1164,37 @@
       });
     });
     return max;
+  }
+
+  function noTaken(mat, no, exceptMatchId) {
+    return draft.divisions.some(function (d) {
+      return B.allMatches(d).some(function (m) {
+        return m.id !== exceptMatchId && Number(m.mat) === Number(mat) && String(m.no) === String(no);
+      });
+    });
+  }
+
+  function maxNoOnMatExcept(mat, exceptMatchId) {
+    var max = 0;
+    draft.divisions.forEach(function (d) {
+      B.allMatches(d).forEach(function (m) {
+        if (m.id === exceptMatchId || Number(m.mat) !== Number(mat)) return;
+        var v = parseInt(m.no, 10);
+        if (v > max) max = v;
+      });
+    });
+    return max;
+  }
+
+  // 부문 목록(배열)에서도 그 매트 부문들 뒤로 옮긴다. 예전 공개 화면은 배열 순서로 매트 탭을 늘어놓는다.
+  function moveInArray(d, g) {
+    var rest = draft.divisions.filter(function (x) { return x !== d; });
+    var at = rest.length;
+    for (var i = rest.length - 1; i >= 0; i--) {
+      if (divGroups(rest[i]).indexOf(g) !== -1) { at = i + 1; break; }
+    }
+    rest.splice(at, 0, d);
+    draft.divisions = rest;
   }
 
   // 실제로 치르는 경기를 진행 순서(앞 경기 → 다음 경기, 3위전은 결승 앞)로
@@ -1451,6 +1489,7 @@
       B.allMatches(d).forEach(function (m) { m.mat = target; });
       if (numbering === 'append') numberDivision(d, maxNoOnMat(target, d.id) + 1);
       else if (numbering === 'clear') B.allMatches(d).forEach(function (m) { m.no = null; });
+      if (usesSheets()) moveInArray(d, g);
     }
     revealDivision(d);
     afterAdjust(reorderOnly ? g + ' 안 순서를 바꿨습니다.' : '"' + d.title + '" 부문을 ' + g + '로 옮겼습니다.');
@@ -1522,6 +1561,7 @@
       d.sheetPos[g] = endPos(g, null);
     }
     draft.divisions.push(d);
+    if (usesSheets()) moveInArray(d, d.sheets[0]);
     if (titleEl) titleEl.value = '';
     revealDivision(d, 'players');
     afterAdjust('새 부문 "' + title + '"을(를) 만들었습니다. 선수를 추가한 뒤 [부문·매트 조정]에서 대진 다시 짜기를 눌러 주세요.');
